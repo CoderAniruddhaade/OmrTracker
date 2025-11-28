@@ -15,10 +15,10 @@ export async function apiRequest(
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   
   // Add user ID from localStorage to auth header
-  const auth = localStorage.getItem("omr_auth");
-  if (auth) {
+  const user = localStorage.getItem("user");
+  if (user) {
     try {
-      const parsed = JSON.parse(auth);
+      const parsed = JSON.parse(user);
       if (parsed.id) {
         headers["X-User-ID"] = parsed.id;
       }
@@ -47,10 +47,10 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
     
     // Add user ID from localStorage to auth header
-    const auth = localStorage.getItem("omr_auth");
-    if (auth) {
+    const user = localStorage.getItem("user");
+    if (user) {
       try {
-        const parsed = JSON.parse(auth);
+        const parsed = JSON.parse(user);
         if (parsed.id) {
           headers["X-User-ID"] = parsed.id;
         }

@@ -171,7 +171,8 @@ export async function registerRoutes(
   // GET current user's sheet
   app.get("/api/omr-sheets/current", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.userId || req.user?.claims?.sub;
+      // Check for impersonation via header, otherwise use session
+      const userId = req.headers["x-user-id"] || req.userId || req.user?.claims?.sub;
       const sheet = await storage.getCurrentUserSheet(userId);
       res.json(sheet);
     } catch (error) {
@@ -183,7 +184,8 @@ export async function registerRoutes(
   // POST or UPDATE sheet (creates if doesn't exist, updates if exists)
   app.post("/api/omr-sheets", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.userId || req.user?.claims?.sub;
+      // Check for impersonation via header, otherwise use session
+      const userId = req.headers["x-user-id"] || req.userId || req.user?.claims?.sub;
       
       // Validate request body
       const validatedData = omrSheetBodySchema.parse(req.body);
@@ -210,7 +212,8 @@ export async function registerRoutes(
   // Get current user's sheets (kept for activity tracking)
   app.get("/api/my-sheets", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.userId || req.user?.claims?.sub;
+      // Check for impersonation via header, otherwise use session
+      const userId = req.headers["x-user-id"] || req.userId || req.user?.claims?.sub;
       const sheets = await storage.getOmrSheetsByUser(userId);
       res.json(sheets);
     } catch (error) {
