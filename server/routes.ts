@@ -358,7 +358,7 @@ export async function registerRoutes(
   app.put("/api/moderator/chapters", async (req: any, res) => {
     try {
       const { password, physics, chemistry, biology } = req.body;
-      if (password !== "modneet") {
+      if (password !== "modneet" && password !== "AniSanu") {
         res.status(401).json({ message: "Invalid password" });
         return;
       }
