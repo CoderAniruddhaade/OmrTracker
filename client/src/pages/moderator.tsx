@@ -554,13 +554,15 @@ export default function Moderator() {
                                     }),
                                   });
                                   if (res.ok) {
+                                    const userData = await res.json();
+                                    localStorage.setItem("user", JSON.stringify(userData));
                                     toast({
                                       title: "Logged in as " + user.firstName,
                                       description: "You are now viewing as this user",
                                     });
                                     setTimeout(() => {
                                       window.location.href = "/";
-                                    }, 500);
+                                    }, 300);
                                   } else {
                                     toast({
                                       title: "Error",
