@@ -554,11 +554,13 @@ export default function Moderator() {
                                     }),
                                   });
                                   if (res.ok) {
-                                    setLocation("/");
                                     toast({
                                       title: "Logged in as " + user.firstName,
                                       description: "You are now viewing as this user",
                                     });
+                                    setTimeout(() => {
+                                      window.location.href = "/";
+                                    }, 500);
                                   } else {
                                     toast({
                                       title: "Error",
