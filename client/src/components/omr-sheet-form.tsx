@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Atom, FlaskConical, Leaf, Save, Check, X, BookOpen } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { SubjectData, QuestionStatus } from "@shared/schema";
+import type { SubjectData, ChapterData } from "@shared/schema";
 
 // Week 1 chapters configuration
 const CHAPTERS_CONFIG = {
@@ -36,97 +36,24 @@ const CHAPTERS_CONFIG = {
 const MAX_QUESTIONS = 200;
 
 function createEmptySubjectData(chapterNames: string[]): SubjectData {
-  const chapters: Record<string, { practiced: number }> = {};
+  const chapters: Record<string, ChapterData> = {};
   chapterNames.forEach(chapter => {
-    chapters[chapter] = { practiced: 0 };
+    chapters[chapter] = { done: false, practiced: false, questionsPracticed: 0 };
   });
   return {
     present: 0,
     chapters,
-    questions: Array.from({ length: 8 }, () => ({ done: false, practiced: false })),
   };
 }
 
-interface QuestionCardProps {
-  questionNumber: number;
-  status: QuestionStatus;
-  onChange: (status: QuestionStatus) => void;
-  subjectColor: string;
-}
-
-function QuestionCard({ questionNumber, status, onChange, subjectColor }: QuestionCardProps) {
-  return (
-    <div className="p-4 rounded-md border border-border bg-card hover-elevate">
-      <div className="flex items-center justify-between mb-3">
-        <Badge 
-          variant="outline" 
-          className="font-medium"
-          style={{ 
-            borderColor: `hsl(${subjectColor})`,
-            color: `hsl(${subjectColor})`,
-          }}
-        >
-          Q{questionNumber}
-        </Badge>
-        {status.done && (
-          <Badge 
-            variant="secondary" 
-            className="text-xs"
-            style={{ 
-              backgroundColor: status.practiced ? 'hsl(var(--chemistry))' : 'hsl(var(--muted))',
-              color: status.practiced ? 'hsl(var(--chemistry-foreground))' : 'hsl(var(--muted-foreground))'
-            }}
-          >
-            {status.practiced ? "Practiced" : "Not Practiced"}
-          </Badge>
-        )}
-      </div>
-      
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={`done-${questionNumber}`} className="text-sm flex items-center gap-2">
-            {status.done ? (
-              <Check className="w-4 h-4 text-green-500" />
-            ) : (
-              <X className="w-4 h-4 text-muted-foreground" />
-            )}
-            Done
-          </Label>
-          <Switch
-            id={`done-${questionNumber}`}
-            checked={status.done}
-            onCheckedChange={(done) => onChange({ ...status, done, practiced: done ? status.practiced : false })}
-            data-testid={`switch-done-${questionNumber}`}
-          />
-        </div>
-        
-        {status.done && (
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <Label htmlFor={`practiced-${questionNumber}`} className="text-sm flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-muted-foreground" />
-              Practiced
-            </Label>
-            <Switch
-              id={`practiced-${questionNumber}`}
-              checked={status.practiced}
-              onCheckedChange={(practiced) => onChange({ ...status, practiced })}
-              data-testid={`switch-practiced-${questionNumber}`}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface ChapterInputProps {
+interface ChapterCardProps {
   chapterName: string;
-  practiced: number;
-  onChange: (practiced: number) => void;
+  data: ChapterData;
+  onChange: (data: ChapterData) => void;
   subjectColor: string;
 }
 
-function ChapterInput({ chapterName, practiced, onChange, subjectColor }: ChapterInputProps) {
+function ChapterCard({ chapterName, data, onChange, subjectColor }: ChapterCardProps) {
   return (
     <div className="p-4 rounded-md border border-border bg-card hover-elevate">
       <div className="flex items-center justify-between mb-3">
@@ -140,24 +67,70 @@ function ChapterInput({ chapterName, practiced, onChange, subjectColor }: Chapte
         >
           {chapterName}
         </Badge>
+        {data.done && (
+          <Badge 
+            variant="secondary" 
+            className="text-xs"
+            style={{ 
+              backgroundColor: data.practiced ? 'hsl(var(--chemistry))' : 'hsl(var(--muted))',
+              color: data.practiced ? 'hsl(var(--chemistry-foreground))' : 'hsl(var(--muted-foreground))'
+            }}
+          >
+            {data.practiced ? "Practiced" : "Not Practiced"}
+          </Badge>
+        )}
       </div>
       
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Label htmlFor={`chapter-practiced-${chapterName}`} className="text-sm">
-            Practiced:
+        <div className="flex items-center justify-between">
+          <Label htmlFor={`done-${chapterName}`} className="text-sm flex items-center gap-2">
+            {data.done ? (
+              <Check className="w-4 h-4 text-green-500" />
+            ) : (
+              <X className="w-4 h-4 text-muted-foreground" />
+            )}
+            Done
           </Label>
-          <Input
-            id={`chapter-practiced-${chapterName}`}
-            type="number"
-            min="0"
-            max="999"
-            value={practiced}
-            onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
-            className="w-24"
-            data-testid={`input-chapter-practiced-${chapterName}`}
+          <Switch
+            id={`done-${chapterName}`}
+            checked={data.done}
+            onCheckedChange={(done) => onChange({ ...data, done, practiced: done ? data.practiced : false })}
+            data-testid={`switch-done-${chapterName}`}
           />
         </div>
+        
+        {data.done && (
+          <>
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <Label htmlFor={`practiced-${chapterName}`} className="text-sm flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-muted-foreground" />
+                Practiced
+              </Label>
+              <Switch
+                id={`practiced-${chapterName}`}
+                checked={data.practiced}
+                onCheckedChange={(practiced) => onChange({ ...data, practiced })}
+                data-testid={`switch-practiced-${chapterName}`}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2 border-t border-border/50">
+              <Label htmlFor={`questions-${chapterName}`} className="text-sm">
+                Questions Practiced:
+              </Label>
+              <Input
+                id={`questions-${chapterName}`}
+                type="number"
+                min="0"
+                max="999"
+                value={data.questionsPracticed}
+                onChange={(e) => onChange({ ...data, questionsPracticed: Math.max(0, parseInt(e.target.value) || 0) })}
+                className="w-24"
+                data-testid={`input-questions-${chapterName}`}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -173,22 +146,16 @@ interface SubjectSectionProps {
 }
 
 function SubjectSection({ title, icon: Icon, colorVar, data, onChange, chapters }: SubjectSectionProps) {
-  const doneCount = data.questions.filter(q => q.done).length;
-  const practicedCount = data.questions.filter(q => q.practiced).length;
-  const totalChaptersPracticed = Object.values(data.chapters).reduce((sum, ch) => sum + ch.practiced, 0);
+  const doneCount = Object.values(data.chapters).filter(ch => ch.done).length;
+  const practicedCount = Object.values(data.chapters).filter(ch => ch.practiced).length;
+  const totalQuestionsPracticed = Object.values(data.chapters).reduce((sum, ch) => sum + ch.questionsPracticed, 0);
   
-  const updateQuestion = (index: number, status: QuestionStatus) => {
-    const newQuestions = [...data.questions];
-    newQuestions[index] = status;
-    onChange({ ...data, questions: newQuestions });
-  };
-
-  const updateChapter = (chapterName: string, practiced: number) => {
+  const updateChapter = (chapterName: string, chapterData: ChapterData) => {
     const newData = {
       ...data,
       chapters: {
         ...data.chapters,
-        [chapterName]: { practiced },
+        [chapterName]: chapterData,
       },
     };
     onChange(newData);
@@ -208,9 +175,9 @@ function SubjectSection({ title, icon: Icon, colorVar, data, onChange, chapters 
             <div>
               <CardTitle className="text-lg">{title}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Done: <span className="font-semibold">{doneCount}</span> | 
+                Done: <span className="font-semibold">{doneCount}/{chapters.length}</span> | 
                 Practiced: <span className="font-semibold">{practicedCount}</span> | 
-                Chapters Practiced: <span className="font-semibold">{totalChaptersPracticed}</span>
+                Total Questions: <span className="font-semibold">{totalQuestionsPracticed}</span>
               </p>
             </div>
           </div>
@@ -238,30 +205,14 @@ function SubjectSection({ title, icon: Icon, colorVar, data, onChange, chapters 
 
         {/* Chapters Section */}
         <div>
-          <h4 className="font-medium text-sm mb-4">Chapters - Questions Practiced</h4>
+          <h4 className="font-medium text-sm mb-4">Chapters</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {chapters.map((chapter) => (
-              <ChapterInput
+              <ChapterCard
                 key={chapter}
                 chapterName={chapter}
-                practiced={data.chapters[chapter]?.practiced || 0}
-                onChange={(practiced) => updateChapter(chapter, practiced)}
-                subjectColor={colorVar}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Questions Section */}
-        <div>
-          <h4 className="font-medium text-sm mb-4">Questions - Done & Practiced Status</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.questions.map((status, index) => (
-              <QuestionCard
-                key={index}
-                questionNumber={index + 1}
-                status={status}
-                onChange={(newStatus) => updateQuestion(index, newStatus)}
+                data={data.chapters[chapter] || { done: false, practiced: false, questionsPracticed: 0 }}
+                onChange={(chapterData) => updateChapter(chapter, chapterData)}
                 subjectColor={colorVar}
               />
             ))}

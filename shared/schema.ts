@@ -34,22 +34,17 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Question status for each question
-export interface QuestionStatus {
+// Chapter data structure - tracks done, practiced status and number of questions practiced
+export interface ChapterData {
   done: boolean;
   practiced: boolean;
+  questionsPracticed: number;
 }
 
-// Chapter data structure - tracks number of questions practiced per chapter
-export interface ChapterData {
-  practiced: number;
-}
-
-// Subject data structure with chapters AND questions
+// Subject data structure with chapters
 export interface SubjectData {
   present: number;
   chapters: Record<string, ChapterData>;
-  questions: QuestionStatus[];
 }
 
 // OMR Sheet table
