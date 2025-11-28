@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
 
 const PASSWORD = "NEETKeLavde";
-const ALLOWED_NAMES = ["Aniruddha", "Pranav"];
+const ALLOWED_NAMES = ["Aniruddha"];
 
 export default function Landing() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,7 +22,7 @@ export default function Landing() {
         return;
       }
       if (!ALLOWED_NAMES.includes(trimmedName)) {
-        setError("Access denied. Only Aniruddha and Pranav are allowed.");
+        setError("Access denied. Only Aniruddha is allowed.");
         setFirstName("");
         setPassword("");
         return;
