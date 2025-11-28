@@ -34,10 +34,17 @@ export async function registerRoutes(
   // User registration
   app.post("/api/auth/register", async (req: any, res) => {
     try {
-      const { username, password } = req.body;
+      let { username, password } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password required" });
+      }
+      
+      // Normalize username - remove spaces
+      username = username.replace(/\s+/g, '').trim();
+      
+      if (!username) {
+        return res.status(400).json({ message: "Username cannot be only spaces" });
       }
       
       // Check if user already exists
@@ -61,11 +68,14 @@ export async function registerRoutes(
   // User login
   app.post("/api/auth/login", async (req: any, res) => {
     try {
-      const { username, password } = req.body;
+      let { username, password } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password required" });
       }
+      
+      // Normalize username - remove spaces
+      username = username.replace(/\s+/g, '').trim();
       
       // Find user by username
       const user = await storage.getUserByUsername(username);

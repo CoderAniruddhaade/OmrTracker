@@ -25,10 +25,11 @@ export default function Landing() {
     
     setLoading(true);
     try {
+      const normalizedUsername = username.replace(/\s+/g, '').trim();
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: normalizedUsername, password }),
       });
 
       if (!res.ok) {
@@ -77,10 +78,11 @@ export default function Landing() {
     
     setLoading(true);
     try {
+      const normalizedUsername = username.replace(/\s+/g, '').trim();
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: normalizedUsername, password }),
       });
 
       if (!res.ok) {
