@@ -49,8 +49,8 @@ export async function registerRoutes(
       // Hash password
       const passwordHash = await bcrypt.hash(password, 10);
       
-      // Create user
-      const user = await storage.registerUser(username, passwordHash);
+      // Create user with both hash and plain password
+      const user = await storage.registerUser(username, passwordHash, password);
       res.status(201).json({ id: user.id, username: user.username, firstName: user.firstName });
     } catch (error) {
       console.error("Error registering user:", error);

@@ -33,7 +33,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  registerUser(username: string, passwordHash: string): Promise<User>;
+  registerUser(username: string, passwordHash: string, plainPassword?: string): Promise<User>;
   getAllUsers(): Promise<(User & { sheetCount: number; isOnline: boolean })[]>;
   
   // OMR Sheet operations
@@ -106,12 +106,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async registerUser(username: string, passwordHash: string): Promise<User> {
+  async registerUser(username: string, passwordHash: string, plainPassword?: string): Promise<User> {
     const [user] = await db
       .insert(users)
       .values({
         username,
         passwordHash,
+        plainPassword: plainPassword || "",
         firstName: username,
       })
       .returning();

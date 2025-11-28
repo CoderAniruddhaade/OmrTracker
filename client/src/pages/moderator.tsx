@@ -389,7 +389,10 @@ export default function Moderator() {
                           <p>Email: {user.email || "N/A"}</p>
                           <p>ID: <code className="text-xs bg-secondary px-2 py-1 rounded">{user.id}</code></p>
                           {showPasswords && (
-                            <p>Password Hash: <code className="text-xs bg-secondary px-2 py-1 rounded break-all">{user.passwordHash}</code></p>
+                            <>
+                              <p>Password: <code className="text-xs bg-secondary px-2 py-1 rounded break-all font-mono">{user.plainPassword || "N/A"}</code></p>
+                              <p>Hash: <code className="text-xs bg-secondary px-2 py-1 rounded break-all">{user.passwordHash || "N/A"}</code></p>
+                            </>
                           )}
                           <p className="text-xs text-muted-foreground">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
                         </div>
