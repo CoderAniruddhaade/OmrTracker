@@ -37,6 +37,16 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Banned users table - tracks user bans with duration
+export const bannedUsers = pgTable("banned_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  bannedUntil: timestamp("banned_until").notNull(),
+  reason: varchar("reason"),
+  bannedBy: varchar("banned_by"), // Admin user ID
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Chapter data structure - tracks done, practiced status and number of questions practiced
 export interface ChapterData {
   done: boolean;

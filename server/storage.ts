@@ -1,5 +1,6 @@
 import {
   users,
+  bannedUsers,
   omrSheets,
   chaptersConfig,
   chapterRecommendations,
@@ -87,6 +88,12 @@ export interface IStorage {
   // Moderator operations
   getAllUsersWithData(): Promise<any[]>;
   getAllChatMessages(): Promise<any[]>;
+  
+  // Ban operations
+  banUser(userId: string, durationMinutes: number, reason?: string): Promise<void>;
+  unbanUser(userId: string): Promise<void>;
+  isAnyUserBanned(): Promise<boolean>;
+  getBannedUsers(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -616,6 +623,46 @@ export class DatabaseStorage implements IStorage {
       .limit(500);
     
     return messages;
+  }
+
+  async banUser(userId: string, durationMinutes: number, reason?: string): Promise<void> {
+    const bannedUntil = new Date(Date.now() + durationMinutes * 60000);
+    await db.insert(bannedUsers).values({
+      userId,
+      bannedUntil,
+      reason: reason || "",
+    });
+  }
+
+  async unbanUser(userId: string): Promise<void> {
+    await db.delete(bannedUsers).where(eq(bannedUsers.userId, userId));
+  }
+
+  async isAnyUserBanned(): Promise<boolean> {
+    const now = new Date();
+    const banned = await db.select().from(bannedUsers).where(sql`${bannedUsers.bannedUntil} > ${now}`).limit(1);
+    return banned.length > 0;
+  }
+
+  async getBannedUsers(): Promise<any[]> {
+    const now = new Date();
+    const bans = await db
+      .select({
+        id: bannedUsers.id,
+        userId: bannedUsers.userId,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        bannedUntil: bannedUsers.bannedUntil,
+        reason: bannedUsers.reason,
+        createdAt: bannedUsers.createdAt,
+      })
+      .from(bannedUsers)
+      .leftJoin(users, eq(bannedUsers.userId, users.id))
+      .where(sql`${bannedUsers.bannedUntil} > ${now}`)
+      .orderBy(desc(bannedUsers.bannedUntil));
+    
+    return bans;
   }
 }
 

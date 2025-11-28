@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Shield, Download, Eye, EyeOff, LogIn } from "lucide-react";
+import { ArrowLeft, Shield, Download, Eye, EyeOff, LogIn, Lock, Unlock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -55,6 +55,8 @@ export default function Moderator() {
   const [importText, setImportText] = useState("");
   const [importSubject, setImportSubject] = useState<"physics" | "chemistry" | "biology">("physics");
   const [activeTab, setActiveTab] = useState("chapters");
+  const [banDuration, setBanDuration] = useState("60");
+  const [banReason, setBanReason] = useState("");
 
   const { data: chapters } = useQuery<ChaptersConfig>({
     queryKey: ["/api/chapters"],
@@ -78,6 +80,16 @@ export default function Moderator() {
     queryFn: async () => {
       const res = await fetch(`/api/moderator/chats?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch chats");
+      return res.json();
+    },
+  });
+
+  const { data: bannedUsers = [], refetch: refetchBanned } = useQuery<any[]>({
+    queryKey: ["/api/admin/banned-users", authType],
+    enabled: authType === "admin",
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/banned-users?password=${encodeURIComponent(password)}`);
+      if (!res.ok) throw new Error("Failed to fetch banned users");
       return res.json();
     },
   });
@@ -328,11 +340,12 @@ export default function Moderator() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-3"}`}>
+          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-4"}`}>
             <TabsTrigger value="chapters">Chapters</TabsTrigger>
             {authType === "admin" && (
               <>
                 <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
+                <TabsTrigger value="banned">Banned ({bannedUsers.length})</TabsTrigger>
                 <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
               </>
             )}
@@ -537,9 +550,43 @@ export default function Moderator() {
                             <p className="font-semibold">{user.firstName} {user.lastName}</p>
                             <p className="text-sm text-muted-foreground">@{user.username}</p>
                           </div>
-                          <div className="flex gap-2 items-center">
+                          <div className="flex gap-2 items-center flex-wrap">
                             {user.isOnline && <Badge variant="secondary">Online</Badge>}
                             <Badge variant="outline">{user.sheets} sheets</Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                const minutes = prompt("Ban for how many minutes?", "60");
+                                if (minutes) {
+                                  try {
+                                    const res = await fetch("/api/admin/ban-user", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        password,
+                                        userId: user.id,
+                                        durationMinutes: parseInt(minutes),
+                                        reason: prompt("Reason for ban (optional):", "") || "",
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      toast({ title: "Success", description: "User banned successfully" });
+                                      refetchBanned();
+                                    } else {
+                                      toast({ title: "Error", description: "Failed to ban user", variant: "destructive" });
+                                    }
+                                  } catch (error) {
+                                    toast({ title: "Error", description: "Failed to ban user", variant: "destructive" });
+                                  }
+                                }
+                              }}
+                              className="gap-1"
+                              data-testid={`button-ban-${user.id}`}
+                            >
+                              <Lock className="w-3 h-3" />
+                              Ban
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -600,6 +647,61 @@ export default function Moderator() {
                     ))}
                   </div>
                 </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="banned" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Banned Users ({bannedUsers.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {bannedUsers.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No banned users currently</p>
+                ) : (
+                  <ScrollArea className="w-full">
+                    <div className="space-y-3">
+                      {bannedUsers.map((ban) => (
+                        <div key={ban.id} className="p-4 border rounded-lg space-y-2 hover-elevate">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <p className="font-semibold">{ban.firstName} {ban.lastName}</p>
+                              <p className="text-sm text-muted-foreground">@{ban.username}</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch("/api/admin/unban-user", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ password, userId: ban.userId }),
+                                  });
+                                  if (res.ok) {
+                                    toast({ title: "Success", description: "User unbanned!" });
+                                    refetchBanned();
+                                  }
+                                } catch (e) {
+                                  toast({ title: "Error", description: "Failed to unban", variant: "destructive" });
+                                }
+                              }}
+                              className="gap-1"
+                            >
+                              <Unlock className="w-3 h-3" />
+                              Unban
+                            </Button>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <p>Reason: {ban.reason || "No reason"}</p>
+                            <p>Banned until: {new Date(ban.bannedUntil).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

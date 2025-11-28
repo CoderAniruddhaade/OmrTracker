@@ -34,6 +34,12 @@ export async function registerRoutes(
   // User registration
   app.post("/api/auth/register", async (req: any, res) => {
     try {
+      // Check if any user is banned - if so, block registration
+      const anyBanned = await storage.isAnyUserBanned();
+      if (anyBanned) {
+        return res.status(403).json({ message: "Registration temporarily disabled. An admin has banned a user." });
+      }
+
       let { username, password } = req.body;
       
       if (!username || !password) {
@@ -655,6 +661,49 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching online users:", error);
       res.status(500).json({ message: "Failed to fetch online users" });
+    }
+  });
+
+  // Admin ban/unban endpoints
+  app.post("/api/admin/ban-user", async (req: any, res) => {
+    try {
+      const { password, userId, durationMinutes, reason } = req.body;
+      if (password !== "AniSanu") {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      await storage.banUser(userId, durationMinutes, reason);
+      res.json({ message: "User banned successfully" });
+    } catch (error) {
+      console.error("Error banning user:", error);
+      res.status(500).json({ message: "Failed to ban user" });
+    }
+  });
+
+  app.post("/api/admin/unban-user", async (req: any, res) => {
+    try {
+      const { password, userId } = req.body;
+      if (password !== "AniSanu") {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      await storage.unbanUser(userId);
+      res.json({ message: "User unbanned successfully" });
+    } catch (error) {
+      console.error("Error unbanning user:", error);
+      res.status(500).json({ message: "Failed to unban user" });
+    }
+  });
+
+  app.get("/api/admin/banned-users", async (req: any, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== "AniSanu") {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      const bannedUsers = await storage.getBannedUsers();
+      res.json(bannedUsers);
+    } catch (error) {
+      console.error("Error fetching banned users:", error);
+      res.status(500).json({ message: "Failed to fetch banned users" });
     }
   });
 
