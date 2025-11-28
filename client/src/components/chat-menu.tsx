@@ -42,7 +42,8 @@ export default function ChatMenu({ onSelectConversation, selectedConvId }: ChatM
     (Conversation & { lastSender?: any; lastMessage?: string })[]
   >({
     queryKey: ["/api/conversations"],
-    refetchInterval: 2000,
+    refetchInterval: 500,
+    staleTime: 0,
   });
 
   // Fetch all users
@@ -53,10 +54,22 @@ export default function ChatMenu({ onSelectConversation, selectedConvId }: ChatM
   // Fetch online users
   const { data: onlineUsersData = [] } = useQuery<any[]>({
     queryKey: ["/api/online-users"],
-    refetchInterval: 3000,
+    refetchInterval: 500,
+    staleTime: 0,
   });
   
-  const onlineUserIds = new Set(onlineUsersData.map((u: any) => u.userId || u.id));
+  // Apply timeout logic to get accurate online status
+  const OFFLINE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  const now = new Date().getTime();
+  
+  const onlineUserIds = new Set(
+    onlineUsersData
+      .filter((u: any) => {
+        const lastSeenTime = new Date(u.lastSeen).getTime();
+        return u.isOnline && (now - lastSeenTime) < OFFLINE_TIMEOUT;
+      })
+      .map((u: any) => u.userId || u.id)
+  );
 
   // Create group
   const createGroupMutation = useMutation({

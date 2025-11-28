@@ -24,7 +24,8 @@ export default function UsersDirectory() {
 
   const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
     queryKey: ["/api/online-users"],
-    refetchInterval: 2000,
+    refetchInterval: 500,
+    staleTime: 0,
   });
 
   if (usersLoading) {

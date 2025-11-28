@@ -36,12 +36,14 @@ export default function WhatsAppChatFullscreen({ onClose }: WhatsAppChatFullscre
 
   const { data: conversations = [] } = useQuery<(Conversation & { lastSender?: any; lastMessage?: string })[]>({
     queryKey: ["/api/conversations"],
-    refetchInterval: 1500,
+    refetchInterval: 500,
+    staleTime: 0,
   });
 
   const { data: messages = [] } = useQuery<(WhisperMessage & { user: any })[]>({
     queryKey: selectedConvId ? [`/api/conversations/${selectedConvId}/messages`] : [],
-    refetchInterval: selectedConvId ? 1500 : undefined,
+    refetchInterval: selectedConvId ? 500 : undefined,
+    staleTime: 0,
   });
 
   const { data: allUsers = [] } = useQuery<any[]>({

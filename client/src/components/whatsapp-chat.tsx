@@ -40,13 +40,15 @@ export default function WhatsAppChat() {
   // Fetch conversations
   const { data: conversations = [] } = useQuery<(Conversation & { lastSender?: any; lastMessage?: string })[]>({
     queryKey: ["/api/conversations"],
-    refetchInterval: 2000,
+    refetchInterval: 500,
+    staleTime: 0,
   });
 
   // Fetch messages for selected conversation
   const { data: messages = [] } = useQuery<(WhisperMessage & { user: any })[]>({
     queryKey: selectedConvId ? [`/api/conversations/${selectedConvId}/messages`] : [],
-    refetchInterval: selectedConvId ? 2000 : undefined,
+    refetchInterval: selectedConvId ? 500 : undefined,
+    staleTime: 0,
   });
 
   // Fetch all users
