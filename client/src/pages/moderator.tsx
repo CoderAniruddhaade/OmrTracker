@@ -3,10 +3,13 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft, Shield, Download, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChaptersConfig {
   physics: string[];
@@ -14,11 +17,32 @@ interface ChaptersConfig {
   biology: string[];
 }
 
+interface ModUser {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  passwordHash: string;
+  createdAt: string;
+  sheets: number;
+  isOnline: boolean;
+}
+
+interface ChatMsg {
+  id: string;
+  userId: string;
+  message: string;
+  createdAt: string;
+  user: { firstName: string } | null;
+}
+
 export default function Moderator() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
   const [physics, setPhysics] = useState<string[]>([]);
   const [chemistry, setChemistry] = useState<string[]>([]);
   const [biology, setBiology] = useState<string[]>([]);
@@ -29,6 +53,26 @@ export default function Moderator() {
   const { data: chapters } = useQuery<ChaptersConfig>({
     queryKey: ["/api/chapters"],
     enabled: isAuthenticated,
+  });
+
+  const { data: allUsers = [] } = useQuery<ModUser[]>({
+    queryKey: ["/api/moderator/users"],
+    enabled: isAuthenticated,
+    queryFn: async () => {
+      const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json();
+    },
+  });
+
+  const { data: chats = [] } = useQuery<ChatMsg[]>({
+    queryKey: ["/api/moderator/chats"],
+    enabled: isAuthenticated,
+    queryFn: async () => {
+      const res = await fetch(`/api/moderator/chats?password=${encodeURIComponent(password)}`);
+      if (!res.ok) throw new Error("Failed to fetch chats");
+      return res.json();
+    },
   });
 
   const updateMutation = useMutation({
@@ -145,9 +189,18 @@ export default function Moderator() {
     }
   };
 
+  const downloadChatLog = () => {
+    const link = document.createElement("a");
+    link.href = `/api/moderator/export-chat?password=${encodeURIComponent(password)}`;
+    link.download = "chat-log.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <Button
           variant="ghost"
           onClick={() => setLocation("/")}
@@ -158,7 +211,15 @@ export default function Moderator() {
           Back
         </Button>
 
-        <Card className="mb-6">
+        <Tabs defaultValue="chapters" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="chapters">Chapters</TabsTrigger>
+            <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
+            <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chapters">
+            <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
@@ -283,7 +344,97 @@ export default function Moderator() {
               {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </CardContent>
-        </Card>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span>All Users Data</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    className="gap-2"
+                  >
+                    {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPasswords ? "Hide" : "Show"} Passwords
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="w-full">
+                  <div className="space-y-3">
+                    {allUsers.map((user) => (
+                      <div key={user.id} className="p-4 border rounded-lg space-y-2 hover-elevate">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div>
+                            <p className="font-semibold">{user.firstName} {user.lastName}</p>
+                            <p className="text-sm text-muted-foreground">@{user.username}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {user.isOnline && <Badge variant="secondary">Online</Badge>}
+                            <Badge variant="outline">{user.sheets} sheets</Badge>
+                          </div>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <p>Email: {user.email || "N/A"}</p>
+                          <p>ID: <code className="text-xs bg-secondary px-2 py-1 rounded">{user.id}</code></p>
+                          {showPasswords && (
+                            <p>Password Hash: <code className="text-xs bg-secondary px-2 py-1 rounded break-all">{user.passwordHash}</code></p>
+                          )}
+                          <p className="text-xs text-muted-foreground">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="chats" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <span>Chat Messages</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadChatLog}
+                    className="gap-2"
+                    data-testid="button-download-chat"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Log
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="w-full h-96">
+                  <div className="space-y-4 pr-4">
+                    {chats.length === 0 ? (
+                      <p className="text-muted-foreground">No messages yet</p>
+                    ) : (
+                      chats.map((msg) => (
+                        <div key={msg.id} className="p-3 border rounded bg-card">
+                          <div className="flex justify-between mb-2">
+                            <span className="font-semibold">{msg.user?.firstName || "Unknown"}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm break-words">{msg.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

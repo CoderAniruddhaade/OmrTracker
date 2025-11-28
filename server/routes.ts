@@ -210,6 +210,111 @@ export async function registerRoutes(
     }
   });
 
+  // Get all users with their data (moderator only)
+  app.get("/api/moderator/users", async (req: any, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== "Sanskruti") {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      
+      const allUsers = await db.select().from(users).orderBy(users.firstName);
+      
+      const usersWithData = await Promise.all(
+        allUsers.map(async (user) => {
+          const sheets = await db.select().from(omrSheets).where(eq(omrSheets.userId, user.id));
+          const presence = await db.select().from(userPresence).where(eq(userPresence.userId, user.id));
+          
+          return {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            passwordHash: user.passwordHash,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            sheets: sheets.length,
+            isOnline: presence[0]?.isOnline || false,
+            lastSeen: presence[0]?.lastSeen,
+          };
+        })
+      );
+      
+      res.json(usersWithData);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Get all chats (moderator only)
+  app.get("/api/moderator/chats", async (req: any, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== "Sanskruti") {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      
+      const messages = await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          createdAt: chatMessages.createdAt,
+          user: users,
+        })
+        .from(chatMessages)
+        .leftJoin(users, eq(chatMessages.userId, users.id))
+        .orderBy(desc(chatMessages.createdAt))
+        .limit(500);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+      res.status(500).json({ message: "Failed to fetch chats" });
+    }
+  });
+
+  // Export chat as text (moderator only)
+  app.get("/api/moderator/export-chat", async (req: any, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== "Sanskruti") {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      
+      const messages = await db
+        .select({
+          id: chatMessages.id,
+          userId: chatMessages.userId,
+          message: chatMessages.message,
+          createdAt: chatMessages.createdAt,
+          user: users,
+        })
+        .from(chatMessages)
+        .leftJoin(users, eq(chatMessages.userId, users.id))
+        .orderBy(desc(chatMessages.createdAt));
+      
+      // Generate text content
+      let content = "OMR TRACKER - CHAT LOG\n";
+      content += "=" .repeat(60) + "\n\n";
+      
+      messages.reverse().forEach((msg: any) => {
+        const date = new Date(msg.createdAt).toLocaleString();
+        const userName = msg.user?.firstName || "Unknown";
+        content += `[${date}] ${userName}:\n${msg.message}\n\n`;
+      });
+      
+      res.setHeader("Content-Type", "text/plain");
+      res.setHeader("Content-Disposition", "attachment; filename=chat-log.txt");
+      res.send(content);
+    } catch (error) {
+      console.error("Error exporting chat:", error);
+      res.status(500).json({ message: "Failed to export chat" });
+    }
+  });
+
   // Get chapters config
   app.get("/api/chapters", async (req: any, res) => {
     try {
