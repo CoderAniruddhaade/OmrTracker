@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Atom, FlaskConical, Leaf, Save, Check, X, BookOpen } from "lucide-react";
+import { Atom, FlaskConical, Leaf, Save, Check, X, BookOpen, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { SubjectData, ChapterData } from "@shared/schema";
@@ -279,11 +279,26 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
     mutation.mutate(formData);
   };
 
+  const handleDownloadPlanner = () => {
+    const driveLink = "https://drive.google.com/uc?export=download&id=12G-a8Gqfty-DO9KwCrIYzfNpFMfy6UPh";
+    window.open(driveLink, "_blank");
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Create OMR Sheet</CardTitle>
+          <Button 
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPlanner}
+            data-testid="button-download-planner"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download Planner
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
