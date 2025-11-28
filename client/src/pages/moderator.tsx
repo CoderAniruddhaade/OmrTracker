@@ -208,9 +208,7 @@ export default function Moderator() {
     document.body.removeChild(link);
   };
 
-  const handleBulkImport = () => {
-    console.log("Import button clicked", { importText, importSubject });
-    
+  const handleBulkImport = async () => {
     if (!importText.trim()) {
       toast({
         title: "Error",
@@ -220,14 +218,12 @@ export default function Moderator() {
       return;
     }
 
-    const chapters = importText
+    const newChapters = importText
       .split(/[,\n]/)
       .map((ch) => ch.trim())
       .filter((ch) => ch.length > 0);
 
-    console.log("Parsed chapters:", chapters);
-
-    if (chapters.length === 0) {
+    if (newChapters.length === 0) {
       toast({
         title: "Error",
         description: "No valid chapters found",
@@ -236,33 +232,52 @@ export default function Moderator() {
       return;
     }
 
-    console.log("Adding to subject:", importSubject);
-    
+    // Update local state with new chapters
+    let updatedPhysics = physics;
+    let updatedChemistry = chemistry;
+    let updatedBiology = biology;
+
     if (importSubject === "physics") {
-      setPhysics((prev) => {
-        const updated = [...prev, ...chapters];
-        console.log("Updated physics:", updated);
-        return updated;
-      });
+      updatedPhysics = [...physics, ...newChapters];
+      setPhysics(updatedPhysics);
     } else if (importSubject === "chemistry") {
-      setChemistry((prev) => {
-        const updated = [...prev, ...chapters];
-        console.log("Updated chemistry:", updated);
-        return updated;
-      });
+      updatedChemistry = [...chemistry, ...newChapters];
+      setChemistry(updatedChemistry);
     } else {
-      setBiology((prev) => {
-        const updated = [...prev, ...chapters];
-        console.log("Updated biology:", updated);
-        return updated;
-      });
+      updatedBiology = [...biology, ...newChapters];
+      setBiology(updatedBiology);
     }
 
     setImportText("");
-    toast({
-      title: "Success",
-      description: `Added ${chapters.length} chapters to ${importSubject}`,
-    });
+
+    // Auto-save to database
+    try {
+      const response = await fetch("/api/moderator/chapters", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password,
+          physics: updatedPhysics,
+          chemistry: updatedChemistry,
+          biology: updatedBiology,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save");
+
+      toast({
+        title: "Success",
+        description: `Added and saved ${newChapters.length} chapters!`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/chapters"] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save chapters to database",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
