@@ -492,6 +492,7 @@ export class DatabaseStorage implements IStorage {
           lastName: user.lastName,
           email: user.email,
           passwordHash: user.passwordHash,
+          plainPassword: user.plainPassword,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
           sheets: sheets.length,
