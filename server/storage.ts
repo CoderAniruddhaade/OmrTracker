@@ -3,6 +3,8 @@ import {
   omrSheets,
   chaptersConfig,
   chapterRecommendations,
+  chatMessages,
+  userPresence,
   type User,
   type UpsertUser,
   type OmrSheet,
@@ -12,6 +14,10 @@ import {
   type InsertChaptersConfig,
   type ChapterRecommendation,
   type InsertChapterRecommendation,
+  type ChatMessage,
+  type InsertChatMessage,
+  type UserPresenceStatus,
+  type InsertUserPresence,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -36,6 +42,14 @@ export interface IStorage {
   getPendingRecommendations(): Promise<ChapterRecommendation[]>;
   approveRecommendation(recId: string, userId: string): Promise<ChapterRecommendation>;
   rejectRecommendation(recId: string, userId: string): Promise<ChapterRecommendation>;
+  
+  // Chat operations
+  createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessages(limit: number): Promise<(ChatMessage & { user: User })[]>;
+  
+  // User presence operations
+  setUserOnline(userId: string, isOnline: boolean): Promise<UserPresenceStatus>;
+  getOnlineUsers(): Promise<UserPresenceStatus[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -224,6 +238,57 @@ export class DatabaseStorage implements IStorage {
       .where(eq(chapterRecommendations.id, recId))
       .returning();
     return updated;
+  }
+
+  // Chat operations
+  async createChatMessage(msg: InsertChatMessage): Promise<ChatMessage> {
+    const [created] = await db
+      .insert(chatMessages)
+      .values(msg)
+      .returning();
+    return created;
+  }
+
+  async getChatMessages(limit: number = 50): Promise<(ChatMessage & { user: User })[]> {
+    return await db
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        createdAt: chatMessages.createdAt,
+        user: users,
+      })
+      .from(chatMessages)
+      .leftJoin(users, eq(chatMessages.userId, users.id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(limit)
+      .then(results => results.reverse().map(r => ({
+        id: r.id,
+        userId: r.userId,
+        message: r.message,
+        createdAt: r.createdAt,
+        user: r.user!,
+      })));
+  }
+
+  // User presence operations
+  async setUserOnline(userId: string, isOnline: boolean): Promise<UserPresenceStatus> {
+    const [result] = await db
+      .insert(userPresence)
+      .values({ userId, isOnline })
+      .onConflictDoUpdate({
+        target: userPresence.userId,
+        set: { isOnline, lastSeen: new Date() },
+      })
+      .returning();
+    return result;
+  }
+
+  async getOnlineUsers(): Promise<UserPresenceStatus[]> {
+    return await db
+      .select()
+      .from(userPresence)
+      .where(eq(userPresence.isOnline, true));
   }
 }
 

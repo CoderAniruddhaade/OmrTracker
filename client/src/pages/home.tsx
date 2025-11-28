@@ -7,9 +7,12 @@ import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText } from "luci
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
+import ChatWindow from "@/components/chat-window";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { exportComparativeReportPDF, exportComparativeReportWord } from "@/lib/pdfExport";
 import type { OmrSheetWithUser } from "@shared/schema";
 
@@ -18,6 +21,26 @@ export default function Home() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new-sheet");
   const [isExporting, setIsExporting] = useState(false);
+
+  // Set online status
+  useEffect(() => {
+    const setOnline = async () => {
+      try {
+        await apiRequest("POST", "/api/presence/true", {});
+      } catch (e) {
+        console.error("Failed to set online status");
+      }
+    };
+    
+    setOnline();
+    
+    const interval = setInterval(setOnline, 30000);
+    
+    return () => {
+      clearInterval(interval);
+      apiRequest("POST", "/api/presence/false", {}).catch(() => {});
+    };
+  }, []);
 
   const { data: activities } = useQuery<OmrSheetWithUser[]>({
     queryKey: ["/api/activity"],
@@ -78,7 +101,7 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6 w-full flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           <aside className="lg:col-span-1 order-2 lg:order-1">
             <div className="sticky top-20 sm:top-24 space-y-4 sm:space-y-6">
               <UserStats user={user} isLoading={isLoading} />
@@ -95,7 +118,7 @@ export default function Home() {
             </div>
           </aside>
 
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          <div className="lg:col-span-3 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <TabsList className="grid w-full sm:w-auto grid-cols-2">
@@ -140,21 +163,40 @@ export default function Home() {
                 )}
               </div>
 
-              <TabsContent value="new-sheet" className="mt-0">
-                <OMRSheetForm />
-              </TabsContent>
 
               <TabsContent value="activity" className="mt-0">
-                <div className="lg:hidden mb-4">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-2">Activity Feed</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    See what everyone is working on
-                  </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  <div>
+                    <div className="lg:hidden mb-4">
+                      <h2 className="text-lg sm:text-xl font-semibold mb-2">Activity Feed</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        See what everyone is working on
+                      </p>
+                    </div>
+                    <ActivityFeed />
+                  </div>
+                  <div className="hidden lg:block">
+                    <ChatWindow />
+                  </div>
                 </div>
-                <ActivityFeed />
+              </TabsContent>
+
+              <TabsContent value="new-sheet" className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div>
+                  <OMRSheetForm />
+                </div>
+                <div className="hidden lg:block">
+                  <ChatWindow />
+                </div>
               </TabsContent>
             </Tabs>
           </div>
+
+          <aside className="lg:col-span-1 order-3 lg:order-3 hidden lg:block">
+            <div className="sticky top-20 sm:top-24">
+              <ChatWindow />
+            </div>
+          </aside>
         </div>
       </main>
     </div>

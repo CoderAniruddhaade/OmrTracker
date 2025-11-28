@@ -214,6 +214,60 @@ export async function registerRoutes(
     }
   });
 
+  // Chat routes
+  app.get("/api/chat/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const messages = await storage.getChatMessages(100);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/chat/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { message } = req.body;
+      
+      if (!message || typeof message !== "string" || message.trim().length === 0) {
+        return res.status(400).json({ message: "Message cannot be empty" });
+      }
+
+      const msg = await storage.createChatMessage({
+        userId,
+        message: message.trim().substring(0, 1000),
+      });
+      res.status(201).json(msg);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Online status routes
+  app.post("/api/presence/:isOnline", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const isOnline = req.params.isOnline === "true";
+      const result = await storage.setUserOnline(userId, isOnline);
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating presence:", error);
+      res.status(500).json({ message: "Failed to update presence" });
+    }
+  });
+
+  app.get("/api/online-users", isAuthenticated, async (req: any, res) => {
+    try {
+      const onlineUsers = await storage.getOnlineUsers();
+      res.json(onlineUsers);
+    } catch (error) {
+      console.error("Error fetching online users:", error);
+      res.status(500).json({ message: "Failed to fetch online users" });
+    }
+  });
+
   // Download app archive
   app.get("/download/app", (req, res) => {
     const fs = require("fs");

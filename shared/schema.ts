@@ -113,6 +113,21 @@ export const chapterRecommendations = pgTable("chapter_recommendations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Chat messages table
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  message: varchar("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User presence/online status table
+export const userPresence = pgTable("user_presence", {
+  userId: varchar("user_id").primaryKey().references(() => users.id),
+  isOnline: boolean("is_online").default(false).notNull(),
+  lastSeen: timestamp("last_seen").defaultNow(),
+});
+
 // Extended type for OMR sheet with user info
 export interface OmrSheetWithUser extends OmrSheet {
   user: User;
@@ -129,3 +144,18 @@ export const insertChapterRecommendationSchema = createInsertSchema(chapterRecom
   updatedAt: true,
 });
 export type InsertChapterRecommendation = z.infer<typeof insertChapterRecommendationSchema>;
+
+// Chat message types
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+// User presence types
+export type UserPresenceStatus = typeof userPresence.$inferSelect;
+export const insertUserPresenceSchema = createInsertSchema(userPresence).omit({
+  lastSeen: true,
+});
+export type InsertUserPresence = z.infer<typeof insertUserPresenceSchema>;
