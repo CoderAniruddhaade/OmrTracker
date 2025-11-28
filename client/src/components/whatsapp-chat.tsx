@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Send, Plus, Search, MoreVertical, Trash2, Edit2, Check, X, MessageCircle } from "lucide-react";
+import { Send, Plus, Search, MoreVertical, Trash2, Edit2, Check, X, MessageCircle, Maximize2 } from "lucide-react";
+import WhatsAppChatFullscreen from "@/components/whatsapp-chat-fullscreen";
 import { useAuth } from "@/hooks/useAuth";
 import type { Conversation, WhisperMessage } from "@shared/schema";
 import {
@@ -29,7 +30,12 @@ export default function WhatsAppChat() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (isFullscreen) {
+    return <WhatsAppChatFullscreen onClose={() => setIsFullscreen(false)} />;
+  }
 
   // Fetch conversations
   const { data: conversations = [] } = useQuery<(Conversation & { lastSender?: any; lastMessage?: string })[]>({
@@ -153,12 +159,22 @@ export default function WhatsAppChat() {
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Chats</h2>
-            <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
-              <DialogTrigger asChild>
-                <Button size="icon" variant="ghost" className="rounded-full" data-testid="button-new-chat">
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => setIsFullscreen(true)}
+                data-testid="button-fullscreen"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </Button>
+              <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="rounded-full" data-testid="button-new-chat">
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Start a Chat</DialogTitle>
@@ -241,7 +257,8 @@ export default function WhatsAppChat() {
                   </div>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
 
           {/* Search */}
