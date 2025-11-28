@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Atom, FlaskConical, Leaf, ClipboardCheck } from "lucide-react";
 import type { OmrSheetWithUser } from "@shared/schema";
 import { Link } from "wouter";
+import { memo } from "react";
 
 interface ActivityFeedProps {
   limit?: number;
@@ -74,32 +76,53 @@ export default function ActivityFeed({ limit, showViewAll = false }: ActivityFee
   );
 }
 
-function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
-  const physicsProgress = (activity.physics.questions.filter(q => q.done).length / 8) * 100;
-  const chemistryProgress = (activity.chemistry.questions.filter(q => q.done).length / 8) * 100;
-  const biologyProgress = (activity.biology.questions.filter(q => q.done).length / 8) * 100;
+interface SubjectProgressProps {
+  icon: typeof Atom;
+  label: string;
+  progress: number;
+  practiced: number;
+  colorVar: string;
+}
 
-  const physicsPracticed = activity.physics.questions.filter(q => q.practiced).length;
-  const chemistryPracticed = activity.chemistry.questions.filter(q => q.practiced).length;
-  const biologyPracticed = activity.biology.questions.filter(q => q.practiced).length;
+const ActivityCard = memo(function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
+  const stats = useMemo(() => {
+    const physicsChapters = Object.values(activity.physics.chapters || {});
+    const chemistryChapters = Object.values(activity.chemistry.chapters || {});
+    const biologyChapters = Object.values(activity.biology.chapters || {});
 
-  const totalDone = 
-    activity.physics.questions.filter(q => q.done).length +
-    activity.chemistry.questions.filter(q => q.done).length +
-    activity.biology.questions.filter(q => q.done).length;
+    const physicsDone = physicsChapters.filter(ch => ch.done).length;
+    const chemistryDone = chemistryChapters.filter(ch => ch.done).length;
+    const biologyDone = biologyChapters.filter(ch => ch.done).length;
 
-  const totalPracticed = physicsPracticed + chemistryPracticed + biologyPracticed;
+    const physicsProgress = physicsChapters.length > 0 ? (physicsDone / physicsChapters.length) * 100 : 0;
+    const chemistryProgress = chemistryChapters.length > 0 ? (chemistryDone / chemistryChapters.length) * 100 : 0;
+    const biologyProgress = biologyChapters.length > 0 ? (biologyDone / biologyChapters.length) * 100 : 0;
 
-  const userName = activity.user?.firstName && activity.user?.lastName
+    const physicsPracticed = physicsChapters.filter(ch => ch.practiced).length;
+    const chemistryPracticed = chemistryChapters.filter(ch => ch.practiced).length;
+    const biologyPracticed = biologyChapters.filter(ch => ch.practiced).length;
+
+    const totalDone = physicsDone + chemistryDone + biologyDone;
+    const totalChapters = physicsChapters.length + chemistryChapters.length + biologyChapters.length;
+    const totalPracticed = physicsPracticed + chemistryPracticed + biologyPracticed;
+
+    return {
+      physicsProgress, chemistryProgress, biologyProgress,
+      physicsPracticed, chemistryPracticed, biologyPracticed,
+      totalDone, totalChapters, totalPracticed
+    };
+  }, [activity]);
+
+  const userName = useMemo(() => activity.user?.firstName && activity.user?.lastName
     ? `${activity.user.firstName} ${activity.user.lastName}`
-    : activity.user?.firstName || activity.user?.email || "Anonymous";
+    : activity.user?.firstName || activity.user?.email || "Anonymous", [activity.user]);
 
-  const initials = userName
+  const initials = useMemo(() => userName
     .split(" ")
     .map(n => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2), [userName]);
 
   return (
     <Link href={`/user/${activity.userId}`} data-testid={`link-activity-${activity.id}`}>
@@ -133,22 +156,22 @@ function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
                 <SubjectProgress 
                   icon={Atom} 
                   label="Physics" 
-                  progress={physicsProgress}
-                  practiced={physicsPracticed}
+                  progress={stats.physicsProgress}
+                  practiced={stats.physicsPracticed}
                   colorVar="var(--physics)"
                 />
                 <SubjectProgress 
                   icon={FlaskConical} 
                   label="Chemistry" 
-                  progress={chemistryProgress}
-                  practiced={chemistryPracticed}
+                  progress={stats.chemistryProgress}
+                  practiced={stats.chemistryPracticed}
                   colorVar="var(--chemistry)"
                 />
                 <SubjectProgress 
                   icon={Leaf} 
                   label="Biology" 
-                  progress={biologyProgress}
-                  practiced={biologyPracticed}
+                  progress={stats.biologyProgress}
+                  practiced={stats.biologyPracticed}
                   colorVar="var(--biology)"
                 />
               </div>
@@ -156,9 +179,9 @@ function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
 
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <Badge variant="outline" className="text-xs whitespace-nowrap">
-                {totalDone}/24
+                {stats.totalDone}/{stats.totalChapters}
               </Badge>
-              {totalPracticed > 0 && (
+              {stats.totalPracticed > 0 && (
                 <Badge 
                   variant="secondary" 
                   className="text-xs whitespace-nowrap"
@@ -167,7 +190,7 @@ function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
                     color: 'hsl(var(--chemistry))'
                   }}
                 >
-                  {totalPracticed}P
+                  {stats.totalPracticed}P
                 </Badge>
               )}
             </div>
@@ -176,17 +199,9 @@ function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
       </Card>
     </Link>
   );
-}
+});
 
-interface SubjectProgressProps {
-  icon: typeof Atom;
-  label: string;
-  progress: number;
-  practiced: number;
-  colorVar: string;
-}
-
-function SubjectProgress({ icon: Icon, label, progress, practiced, colorVar }: SubjectProgressProps) {
+const SubjectProgress = memo(function SubjectProgress({ icon: Icon, label, progress, practiced, colorVar }: SubjectProgressProps) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1">
@@ -208,4 +223,4 @@ function SubjectProgress({ icon: Icon, label, progress, practiced, colorVar }: S
       />
     </div>
   );
-}
+});
