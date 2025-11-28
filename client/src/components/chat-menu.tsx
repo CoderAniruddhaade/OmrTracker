@@ -59,7 +59,7 @@ export default function ChatMenu({ onSelectConversation, selectedConvId }: ChatM
   });
   
   // Apply timeout logic to get accurate online status
-  const OFFLINE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  const OFFLINE_TIMEOUT = 2000; // 2 seconds
   const now = new Date().getTime();
   
   const onlineUserIds = new Set(
