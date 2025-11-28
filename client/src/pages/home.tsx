@@ -1,16 +1,53 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardCheck, Activity, Plus, LogOut } from "lucide-react";
+import { ClipboardCheck, Activity, Plus, LogOut, Download } from "lucide-react";
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { exportComparativeReport } from "@/lib/pdfExport";
+import type { OmrSheetWithUser } from "@shared/schema";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new-sheet");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const { data: activities } = useQuery<OmrSheetWithUser[]>({
+    queryKey: ["/api/activity"],
+  });
+
+  const handleExportComparative = async () => {
+    try {
+      if (!activities || activities.length === 0) {
+        toast({
+          title: "No Data",
+          description: "No activity data to export",
+          variant: "destructive",
+        });
+        return;
+      }
+      setIsExporting(true);
+      await exportComparativeReport(activities);
+      toast({
+        title: "Success",
+        description: "Comparative report exported successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,16 +88,30 @@ export default function Home() {
 
           <div className="lg:col-span-2 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="new-sheet" className="flex items-center gap-2" data-testid="tab-new-sheet">
-                  <Plus className="w-4 h-4" />
-                  New Sheet
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="flex items-center gap-2" data-testid="tab-activity">
-                  <Activity className="w-4 h-4" />
-                  All Activity
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="new-sheet" className="flex items-center gap-2" data-testid="tab-new-sheet">
+                    <Plus className="w-4 h-4" />
+                    New Sheet
+                  </TabsTrigger>
+                  <TabsTrigger value="activity" className="flex items-center gap-2" data-testid="tab-activity">
+                    <Activity className="w-4 h-4" />
+                    All Activity
+                  </TabsTrigger>
+                </TabsList>
+                {activeTab === "activity" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleExportComparative}
+                    disabled={isExporting || !activities?.length}
+                    data-testid="button-export-comparative"
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    {isExporting ? "Exporting..." : "Export Report"}
+                  </Button>
+                )}
+              </div>
 
               <TabsContent value="new-sheet" className="mt-0">
                 <OMRSheetForm onSuccess={() => setActiveTab("activity")} />

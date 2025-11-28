@@ -1,0 +1,196 @@
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import type { OmrSheet, OmrSheetWithUser } from "@shared/schema";
+
+export async function exportIndividualReport(sheet: OmrSheet, userName: string) {
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  let yPosition = margin;
+
+  // Title
+  doc.setFontSize(20);
+  doc.text("OMR Sheet Report", margin, yPosition);
+  
+  yPosition += 15;
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`User: ${userName}`, margin, yPosition);
+  yPosition += 6;
+  doc.text(`Date: ${new Date(sheet.createdAt!).toLocaleDateString()}`, margin, yPosition);
+  yPosition += 6;
+  doc.text(`Sheet Name: ${sheet.name}`, margin, yPosition);
+  
+  yPosition += 12;
+  doc.setTextColor(0);
+
+  // Subject sections
+  const subjects = [
+    { title: "Physics", data: sheet.physics, color: [215, 75, 50] },
+    { title: "Chemistry", data: sheet.chemistry, color: [150, 60, 40] },
+    { title: "Biology", data: sheet.biology, color: [30, 70, 48] },
+  ];
+
+  for (const subject of subjects) {
+    // Check if we need a new page
+    if (yPosition > pageHeight - 40) {
+      doc.addPage();
+      yPosition = margin;
+    }
+
+    // Subject header
+    doc.setFontSize(14);
+    doc.setTextColor(subject.color[0], subject.color[1], subject.color[2]);
+    doc.text(`${subject.title}`, margin, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(10);
+    doc.setTextColor(80);
+    
+    // Present questions
+    doc.text(`Questions Present: ${subject.data.present}`, margin + 5, yPosition);
+    yPosition += 6;
+
+    // Chapters
+    const chapters = Object.entries(subject.data.chapters || {});
+    doc.text("Chapters:", margin + 5, yPosition);
+    yPosition += 5;
+
+    for (const [chapterName, chapterData] of chapters) {
+      const status = chapterData.done ? (chapterData.practiced ? "Done & Practiced" : "Done") : "Not Done";
+      const questionsPracticed = chapterData.questionsPracticed || 0;
+      
+      doc.setFontSize(9);
+      doc.text(
+        `• ${chapterName}: ${status} | Questions: ${questionsPracticed}`,
+        margin + 10,
+        yPosition
+      );
+      yPosition += 5;
+
+      if (yPosition > pageHeight - 20) {
+        doc.addPage();
+        yPosition = margin;
+      }
+    }
+
+    yPosition += 5;
+  }
+
+  // Summary
+  if (yPosition > pageHeight - 30) {
+    doc.addPage();
+    yPosition = margin;
+  }
+
+  doc.setFontSize(12);
+  doc.setTextColor(0);
+  doc.text("Summary", margin, yPosition);
+  yPosition += 8;
+
+  doc.setFontSize(10);
+  doc.setTextColor(80);
+  
+  const physicsChapters = Object.values(sheet.physics.chapters || {});
+  const chemistryChapters = Object.values(sheet.chemistry.chapters || {});
+  const biologyChapters = Object.values(sheet.biology.chapters || {});
+
+  const physicsDone = physicsChapters.filter(ch => ch.done).length;
+  const chemistryDone = chemistryChapters.filter(ch => ch.done).length;
+  const biologyDone = biologyChapters.filter(ch => ch.done).length;
+  const totalDone = physicsDone + chemistryDone + biologyDone;
+  const totalChapters = physicsChapters.length + chemistryChapters.length + biologyChapters.length;
+
+  doc.text(`Chapters Completed: ${totalDone}/${totalChapters}`, margin + 5, yPosition);
+  yPosition += 6;
+  doc.text(`Physics: ${physicsDone}/${physicsChapters.length}`, margin + 5, yPosition);
+  yPosition += 6;
+  doc.text(`Chemistry: ${chemistryDone}/${chemistryChapters.length}`, margin + 5, yPosition);
+  yPosition += 6;
+  doc.text(`Biology: ${biologyDone}/${biologyChapters.length}`, margin + 5, yPosition);
+
+  // Download
+  doc.save(`${userName}-${sheet.name}-${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+export async function exportComparativeReport(sheets: OmrSheetWithUser[]) {
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  let yPosition = margin;
+
+  // Title
+  doc.setFontSize(20);
+  doc.text("Comparative OMR Report", margin, yPosition);
+  
+  yPosition += 12;
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, yPosition);
+  doc.text(`Total Users: ${sheets.length}`, margin + 80, yPosition);
+  
+  yPosition += 15;
+  doc.setTextColor(0);
+
+  // Create comparison table
+  const tableData: string[][] = [];
+  
+  // Header
+  tableData.push(["User", "Physics", "Chemistry", "Biology", "Total Done", "Completion %"]);
+
+  // Data rows
+  for (const sheet of sheets) {
+    const physicsDone = Object.values(sheet.physics.chapters || {}).filter(ch => ch.done).length;
+    const chemistryDone = Object.values(sheet.chemistry.chapters || {}).filter(ch => ch.done).length;
+    const biologyDone = Object.values(sheet.biology.chapters || {}).filter(ch => ch.done).length;
+    const totalDone = physicsDone + chemistryDone + biologyDone;
+    
+    const physicsCount = Object.keys(sheet.physics.chapters || {}).length;
+    const chemistryCount = Object.keys(sheet.chemistry.chapters || {}).length;
+    const biologyCount = Object.keys(sheet.biology.chapters || {}).length;
+    const totalChapters = physicsCount + chemistryCount + biologyCount;
+    
+    const completion = totalChapters > 0 ? Math.round((totalDone / totalChapters) * 100) : 0;
+
+    const userName = sheet.user?.firstName && sheet.user?.lastName
+      ? `${sheet.user.firstName} ${sheet.user.lastName}`
+      : sheet.user?.firstName || sheet.user?.email || "Unknown";
+
+    tableData.push([
+      userName,
+      `${physicsDone}/${physicsCount}`,
+      `${chemistryDone}/${chemistryCount}`,
+      `${biologyDone}/${biologyCount}`,
+      totalDone.toString(),
+      `${completion}%`,
+    ]);
+  }
+
+  // Add table
+  (doc as any).autoTable({
+    head: [tableData[0]],
+    body: tableData.slice(1),
+    startY: yPosition,
+    margin: margin,
+    headerStyles: {
+      fillColor: [30, 70, 48],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    alternateRowStyles: {
+      fillColor: [240, 240, 240],
+    },
+    columnStyles: {
+      0: { cellWidth: 40 },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 20 },
+    },
+  });
+
+  doc.save(`comparative-report-${new Date().toISOString().split('T')[0]}.pdf`);
+}
