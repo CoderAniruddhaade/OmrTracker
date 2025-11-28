@@ -209,6 +209,8 @@ export default function Moderator() {
   };
 
   const handleBulkImport = () => {
+    console.log("Import button clicked", { importText, importSubject });
+    
     if (!importText.trim()) {
       toast({
         title: "Error",
@@ -223,6 +225,8 @@ export default function Moderator() {
       .map((ch) => ch.trim())
       .filter((ch) => ch.length > 0);
 
+    console.log("Parsed chapters:", chapters);
+
     if (chapters.length === 0) {
       toast({
         title: "Error",
@@ -232,12 +236,26 @@ export default function Moderator() {
       return;
     }
 
+    console.log("Adding to subject:", importSubject);
+    
     if (importSubject === "physics") {
-      setPhysics([...physics, ...chapters]);
+      setPhysics((prev) => {
+        const updated = [...prev, ...chapters];
+        console.log("Updated physics:", updated);
+        return updated;
+      });
     } else if (importSubject === "chemistry") {
-      setChemistry([...chemistry, ...chapters]);
+      setChemistry((prev) => {
+        const updated = [...prev, ...chapters];
+        console.log("Updated chemistry:", updated);
+        return updated;
+      });
     } else {
-      setBiology([...biology, ...chapters]);
+      setBiology((prev) => {
+        const updated = [...prev, ...chapters];
+        console.log("Updated biology:", updated);
+        return updated;
+      });
     }
 
     setImportText("");
