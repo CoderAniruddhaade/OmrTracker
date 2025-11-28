@@ -96,6 +96,54 @@ shared/
 
 The app runs with `npm run dev` which starts both frontend (Vite) and backend (Express) on port 5000.
 
+## Deploying to Vercel
+
+### Prerequisites
+- GitHub repository with your code pushed
+- Neon PostgreSQL database (the app already uses Neon's serverless, which is Vercel-compatible)
+- Vercel account (free tier available at vercel.com)
+
+### Step-by-Step Deployment
+
+1. **Push your code to GitHub** (if not already done)
+   ```bash
+   git add .
+   git commit -m "Ready for Vercel deployment"
+   git push
+   ```
+
+2. **Create a Neon PostgreSQL Database** (if you haven't already)
+   - Go to console.neon.tech
+   - Create a new project and database
+   - Copy your DATABASE_URL connection string
+
+3. **Import your GitHub repo into Vercel**
+   - Go to vercel.com/dashboard
+   - Click "Add New" → "Project"
+   - Select your GitHub repository
+   - Click "Import"
+
+4. **Configure Environment Variables**
+   - In Vercel's project settings, go to "Environment Variables"
+   - Add `DATABASE_URL` with your Neon connection string
+   - Add `SESSION_SECRET` with a random string (e.g., `openssl rand -hex 32`)
+   - Click "Save"
+
+5. **Deploy**
+   - Vercel will automatically detect the Node.js app
+   - The build will run `npm run build`
+   - The app will start with `npm start`
+   - Your app will be live at `https://your-project.vercel.app`
+
+6. **Database Migration** (First time only)
+   - Once deployed, you may need to run migrations
+   - The schema will auto-sync with the Neon database
+
+### Environment Variables Needed for Vercel
+- `DATABASE_URL`: Your Neon PostgreSQL connection string
+- `SESSION_SECRET`: A secure random string for session management
+- `NODE_ENV`: Set to `production` (Vercel sets this automatically)
+
 ## Recent Changes
 
 - Initial implementation of OMR Tracker with full CRUD functionality
