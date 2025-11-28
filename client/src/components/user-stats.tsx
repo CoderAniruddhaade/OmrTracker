@@ -53,22 +53,29 @@ export default function UserStats({ user, isLoading }: UserStatsProps) {
 
   const totalSheets = sheets?.length || 0;
   
-  const totalDone = sheets?.reduce((acc, sheet) => {
-    return acc + 
-      sheet.physics.questions.filter(q => q.done).length +
-      sheet.chemistry.questions.filter(q => q.done).length +
-      sheet.biology.questions.filter(q => q.done).length;
-  }, 0) || 0;
+  const totalDone = !sheets ? 0 : sheets.reduce((acc, sheet) => {
+    const physicsDone = Object.values(sheet?.physics?.chapters || {}).filter(ch => ch?.done).length;
+    const chemistryDone = Object.values(sheet?.chemistry?.chapters || {}).filter(ch => ch?.done).length;
+    const biologyDone = Object.values(sheet?.biology?.chapters || {}).filter(ch => ch?.done).length;
+    return acc + physicsDone + chemistryDone + biologyDone;
+  }, 0);
 
-  const totalPracticed = sheets?.reduce((acc, sheet) => {
-    return acc + 
-      sheet.physics.questions.filter(q => q.practiced).length +
-      sheet.chemistry.questions.filter(q => q.practiced).length +
-      sheet.biology.questions.filter(q => q.practiced).length;
-  }, 0) || 0;
+  const totalPracticed = !sheets ? 0 : sheets.reduce((acc, sheet) => {
+    const physicsPracticed = Object.values(sheet?.physics?.chapters || {}).filter(ch => ch?.practiced).length;
+    const chemistryPracticed = Object.values(sheet?.chemistry?.chapters || {}).filter(ch => ch?.practiced).length;
+    const biologyPracticed = Object.values(sheet?.biology?.chapters || {}).filter(ch => ch?.practiced).length;
+    return acc + physicsPracticed + chemistryPracticed + biologyPracticed;
+  }, 0);
 
-  const avgCompletion = totalSheets > 0 
-    ? Math.round((totalDone / (totalSheets * 24)) * 100) 
+  const totalChapters = !sheets ? 0 : sheets.reduce((acc, sheet) => {
+    const physicsCount = Object.keys(sheet?.physics?.chapters || {}).length;
+    const chemistryCount = Object.keys(sheet?.chemistry?.chapters || {}).length;
+    const biologyCount = Object.keys(sheet?.biology?.chapters || {}).length;
+    return acc + physicsCount + chemistryCount + biologyCount;
+  }, 0);
+
+  const avgCompletion = totalChapters > 0 
+    ? Math.round((totalDone / totalChapters) * 100) 
     : 0;
 
   const practiceRate = totalDone > 0
