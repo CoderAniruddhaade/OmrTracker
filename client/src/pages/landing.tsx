@@ -7,7 +7,7 @@ import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "luc
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const PASSWORD = "Sanskruti";
-const ALLOWED_NAMES = ["Aniruddha"];
+const ALLOWED_NAMES: string[] = []; // Allow all users
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -22,12 +22,6 @@ export default function Landing() {
       const trimmedName = firstName.trim();
       if (!trimmedName) {
         setError("Please enter your first name");
-        return;
-      }
-      if (!ALLOWED_NAMES.includes(trimmedName)) {
-        setError("Access denied. Only Aniruddha is allowed.");
-        setFirstName("");
-        setPassword("");
         return;
       }
       // Store auth in localStorage
@@ -121,7 +115,14 @@ export default function Landing() {
               Mark what you've done, what you've practiced, and see how you compare with others.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <Button size="lg" onClick={() => setLocation("/")} className="text-sm sm:text-base" data-testid="button-get-started">
+              <Button size="lg" onClick={() => {
+                localStorage.setItem("omr_auth", JSON.stringify({ 
+                  authenticated: true, 
+                  name: "Guest",
+                  timestamp: Date.now() 
+                }));
+                setLocation("/");
+              }} className="text-sm sm:text-base" data-testid="button-get-started">
                 Access Dashboard
               </Button>
               <Button size="lg" variant="outline" asChild className="text-sm sm:text-base" data-testid="button-moderator-panel">

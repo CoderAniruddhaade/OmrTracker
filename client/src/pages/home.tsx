@@ -167,7 +167,7 @@ export default function Home() {
               <TabsContent value="activity" className="mt-0">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <div className="lg:hidden mb-4">
+                    <div className="mb-4">
                       <h2 className="text-lg sm:text-xl font-semibold mb-2">Activity Feed</h2>
                       <p className="text-xs sm:text-sm text-muted-foreground">
                         See what everyone is working on
@@ -175,7 +175,7 @@ export default function Home() {
                     </div>
                     <ActivityFeed />
                   </div>
-                  <div className="hidden lg:block">
+                  <div>
                     <ChatWindow />
                   </div>
                 </div>
@@ -185,18 +185,13 @@ export default function Home() {
                 <div>
                   <OMRSheetForm />
                 </div>
-                <div className="hidden lg:block">
+                <div>
                   <ChatWindow />
                 </div>
               </TabsContent>
             </Tabs>
           </div>
 
-          <aside className="lg:col-span-1 order-3 lg:order-3 hidden lg:block">
-            <div className="sticky top-20 sm:top-24">
-              <ChatWindow />
-            </div>
-          </aside>
         </div>
       </main>
     </div>
