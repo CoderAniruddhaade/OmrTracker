@@ -12,27 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 import RecommendChapters from "./recommend-chapters";
 import type { SubjectData, ChapterData } from "@shared/schema";
 
-// Week 1 chapters configuration
-const CHAPTERS_CONFIG = {
-  physics: [
-    "Electrostatics",
-    "Capacitance",
-    "Current electricity",
-    "Elasticity",
-  ],
-  chemistry: [
-    "p block",
-    "Coordination compounds",
-  ],
-  biology: [
-    "Human health and diseases",
-    "Microbes",
-    "Biotechnology:PP",
-    "Biotech: Applications",
-    "Tissue culture",
-    "The living world",
-  ],
+// Default chapters configuration (fallback)
+const DEFAULT_CHAPTERS_CONFIG = {
+  physics: ["Elasticity", "Capacitance", "Electrostatics", "Current electricity"],
+  chemistry: ["p block", "Coordination compounds"],
+  biology: ["Microbes", "Tissue culture", "Biotechnology:PP", "The living world", "Biotech: Applications", "Human health and diseases"],
 };
+
+interface ChaptersConfig {
+  physics: string[];
+  chemistry: string[];
+  biology: string[];
+}
 
 const MAX_QUESTIONS = 200;
 
@@ -229,11 +220,19 @@ interface OMRSheetFormProps {
 }
 
 export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
+  // Fetch chapters from API
+  const { data: chaptersConfig, isLoading: chaptersLoading } = useQuery<ChaptersConfig>({
+    queryKey: ["/api/chapters"],
+  });
+
+  // Use fetched chapters or fallback to defaults
+  const chapters = chaptersConfig || DEFAULT_CHAPTERS_CONFIG;
+
   const [formData, setFormData] = useState({
     name: "",
-    physics: createEmptySubjectData(CHAPTERS_CONFIG.physics),
-    chemistry: createEmptySubjectData(CHAPTERS_CONFIG.chemistry),
-    biology: createEmptySubjectData(CHAPTERS_CONFIG.biology),
+    physics: createEmptySubjectData(chapters.physics),
+    chemistry: createEmptySubjectData(chapters.chemistry),
+    biology: createEmptySubjectData(chapters.biology),
   });
 
   const { toast } = useToast();
@@ -243,17 +242,27 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
     queryKey: ["/api/omr-sheets/current"],
   });
 
+  // Update form when chapters are fetched or changed
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      physics: createEmptySubjectData(chapters.physics),
+      chemistry: createEmptySubjectData(chapters.chemistry),
+      biology: createEmptySubjectData(chapters.biology),
+    }));
+  }, [chapters]);
+
   // Load existing sheet data when it's fetched
   useEffect(() => {
     if (currentSheet) {
       setFormData({
         name: currentSheet.name,
-        physics: currentSheet.physics || createEmptySubjectData(CHAPTERS_CONFIG.physics),
-        chemistry: currentSheet.chemistry || createEmptySubjectData(CHAPTERS_CONFIG.chemistry),
-        biology: currentSheet.biology || createEmptySubjectData(CHAPTERS_CONFIG.biology),
+        physics: currentSheet.physics || createEmptySubjectData(chapters.physics),
+        chemistry: currentSheet.chemistry || createEmptySubjectData(chapters.chemistry),
+        biology: currentSheet.biology || createEmptySubjectData(chapters.biology),
       });
     }
-  }, [currentSheet]);
+  }, [currentSheet, chapters]);
 
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -338,7 +347,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
           colorVar="var(--physics)"
           data={formData.physics}
           onChange={(physics) => setFormData({ ...formData, physics })}
-          chapters={CHAPTERS_CONFIG.physics}
+          chapters={chapters.physics}
         />
 
         <SubjectSection
@@ -347,7 +356,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
           colorVar="var(--chemistry)"
           data={formData.chemistry}
           onChange={(chemistry) => setFormData({ ...formData, chemistry })}
-          chapters={CHAPTERS_CONFIG.chemistry}
+          chapters={chapters.chemistry}
         />
 
         <SubjectSection
@@ -356,7 +365,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
           colorVar="var(--biology)"
           data={formData.biology}
           onChange={(biology) => setFormData({ ...formData, biology })}
-          chapters={CHAPTERS_CONFIG.biology}
+          chapters={chapters.biology}
         />
       </div>
 
