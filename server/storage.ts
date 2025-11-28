@@ -460,17 +460,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserConversations(userId: string): Promise<(Conversation & { lastSender?: User; lastMessage?: string })[]> {
-    const convs = await db
-      .selectDistinct()
-      .from(conversations)
-      .where((c) => {
-        return sql`${c.participantIds} @> jsonb_build_array(${userId})`;
-      })
-      .orderBy(desc(conversations.lastMessageAt))
-      .limit(50);
+    // Get all conversations and filter in code
+    const allConvs = await db.query.conversations.findMany({
+      limit: 100,
+      orderBy: desc(conversations.lastMessageAt),
+    });
+    
+    // Filter conversations where user is a participant
+    const userConvs = allConvs.filter(conv => {
+      const participantIds = Array.isArray(conv.participantIds) ? conv.participantIds : JSON.parse(JSON.stringify(conv.participantIds));
+      return participantIds.includes(userId);
+    });
     
     const result = await Promise.all(
-      convs.map(async (conv) => {
+      userConvs.map(async (conv) => {
         const lastMsg = await db
           .select()
           .from(whisperMessages)
