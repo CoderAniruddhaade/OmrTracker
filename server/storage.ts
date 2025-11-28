@@ -2,6 +2,7 @@ import {
   users,
   omrSheets,
   chaptersConfig,
+  chapterRecommendations,
   type User,
   type UpsertUser,
   type OmrSheet,
@@ -9,9 +10,11 @@ import {
   type OmrSheetWithUser,
   type ChaptersConfig,
   type InsertChaptersConfig,
+  type ChapterRecommendation,
+  type InsertChapterRecommendation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -27,6 +30,12 @@ export interface IStorage {
   // Chapters config operations
   getChaptersConfig(): Promise<ChaptersConfig | null>;
   updateChaptersConfig(chapters: InsertChaptersConfig): Promise<ChaptersConfig>;
+  
+  // Chapter recommendations operations
+  createRecommendation(rec: InsertChapterRecommendation): Promise<ChapterRecommendation>;
+  getPendingRecommendations(): Promise<ChapterRecommendation[]>;
+  approveRecommendation(recId: string, userId: string): Promise<ChapterRecommendation>;
+  rejectRecommendation(recId: string, userId: string): Promise<ChapterRecommendation>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -150,6 +159,71 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }
+  }
+
+  // Chapter recommendations operations
+  async createRecommendation(rec: InsertChapterRecommendation): Promise<ChapterRecommendation> {
+    const [created] = await db
+      .insert(chapterRecommendations)
+      .values(rec)
+      .returning();
+    return created;
+  }
+
+  async getPendingRecommendations(): Promise<ChapterRecommendation[]> {
+    return await db
+      .select()
+      .from(chapterRecommendations)
+      .where(eq(chapterRecommendations.status, "pending"))
+      .orderBy(desc(chapterRecommendations.createdAt));
+  }
+
+  async approveRecommendation(recId: string, userId: string): Promise<ChapterRecommendation> {
+    const rec = await db
+      .select()
+      .from(chapterRecommendations)
+      .where(eq(chapterRecommendations.id, recId));
+    
+    if (!rec.length) throw new Error("Recommendation not found");
+    
+    const approvals = [...(rec[0].approvals || []), userId];
+    const allUsers = await db.select().from(users);
+    const totalUsers = allUsers.length;
+    
+    const status = approvals.length === totalUsers ? "approved" : "pending";
+    
+    const [updated] = await db
+      .update(chapterRecommendations)
+      .set({
+        approvals: approvals as unknown as string[],
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(chapterRecommendations.id, recId))
+      .returning();
+    return updated;
+  }
+
+  async rejectRecommendation(recId: string, userId: string): Promise<ChapterRecommendation> {
+    const rec = await db
+      .select()
+      .from(chapterRecommendations)
+      .where(eq(chapterRecommendations.id, recId));
+    
+    if (!rec.length) throw new Error("Recommendation not found");
+    
+    const rejections = [...(rec[0].rejections || []), userId];
+    
+    const [updated] = await db
+      .update(chapterRecommendations)
+      .set({
+        rejections: rejections as unknown as string[],
+        status: "rejected",
+        updatedAt: new Date(),
+      })
+      .where(eq(chapterRecommendations.id, recId))
+      .returning();
+    return updated;
   }
 }
 

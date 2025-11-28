@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Atom, FlaskConical, Leaf, Save, Check, X, BookOpen, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import RecommendChapters from "./recommend-chapters";
 import type { SubjectData, ChapterData } from "@shared/schema";
 
 // Week 1 chapters configuration
@@ -125,7 +126,7 @@ function ChapterCard({ chapterName, data, onChange, subjectColor }: ChapterCardP
                 max="999"
                 value={data.questionsPracticed}
                 onChange={(e) => onChange({ ...data, questionsPracticed: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-24"
+                className="w-20"
                 data-testid={`input-questions-${chapterName}`}
               />
             </div>
@@ -315,6 +316,8 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      <RecommendChapters />
 
       <div className="space-y-6">
         <SubjectSection

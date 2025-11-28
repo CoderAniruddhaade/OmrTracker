@@ -164,5 +164,55 @@ export async function registerRoutes(
     }
   });
 
+  // Recommend chapter
+  app.post("/api/recommendations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { subject, chapterName } = req.body;
+      const rec = await storage.createRecommendation({ userId, subject, chapterName });
+      res.json(rec);
+    } catch (error) {
+      console.error("Error creating recommendation:", error);
+      res.status(500).json({ message: "Failed to create recommendation" });
+    }
+  });
+
+  // Get pending recommendations
+  app.get("/api/recommendations", isAuthenticated, async (req: any, res) => {
+    try {
+      const recs = await storage.getPendingRecommendations();
+      res.json(recs);
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+
+  // Approve recommendation
+  app.post("/api/recommendations/:id/approve", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updated = await storage.approveRecommendation(id, userId);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error approving recommendation:", error);
+      res.status(500).json({ message: "Failed to approve recommendation" });
+    }
+  });
+
+  // Reject recommendation
+  app.post("/api/recommendations/:id/reject", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updated = await storage.rejectRecommendation(id, userId);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error rejecting recommendation:", error);
+      res.status(500).json({ message: "Failed to reject recommendation" });
+    }
+  });
+
   return httpServer;
 }

@@ -100,7 +100,32 @@ export const insertChaptersConfigSchema = createInsertSchema(chaptersConfig).omi
 export type InsertChaptersConfig = z.infer<typeof insertChaptersConfigSchema>;
 export type ChaptersConfig = typeof chaptersConfig.$inferSelect;
 
+// Chapter recommendations table
+export const chapterRecommendations = pgTable("chapter_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  subject: varchar("subject").notNull(), // physics, chemistry, biology
+  chapterName: varchar("chapter_name").notNull(),
+  approvals: jsonb("approvals").$type<string[]>().default(sql`'[]'`).notNull(), // array of user IDs who approved
+  rejections: jsonb("rejections").$type<string[]>().default(sql`'[]'`).notNull(), // array of user IDs who rejected
+  status: varchar("status").default("pending").notNull(), // pending, approved, rejected
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Extended type for OMR sheet with user info
 export interface OmrSheetWithUser extends OmrSheet {
   user: User;
 }
+
+// Recommendation types
+export type ChapterRecommendation = typeof chapterRecommendations.$inferSelect;
+export const insertChapterRecommendationSchema = createInsertSchema(chapterRecommendations).omit({
+  id: true,
+  approvals: true,
+  rejections: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertChapterRecommendation = z.infer<typeof insertChapterRecommendationSchema>;
