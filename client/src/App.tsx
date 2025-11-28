@@ -37,16 +37,33 @@ function Router() {
 
   useEffect(() => {
     // Check localStorage for auth
-    const auth = localStorage.getItem("omr_auth");
-    if (auth) {
-      try {
-        const parsed = JSON.parse(auth);
-        setIsLocalAuth(parsed.authenticated === true);
-      } catch (e) {
+    const checkAuth = () => {
+      const auth = localStorage.getItem("omr_auth");
+      if (auth) {
+        try {
+          const parsed = JSON.parse(auth);
+          setIsLocalAuth(parsed.authenticated === true);
+        } catch (e) {
+          setIsLocalAuth(false);
+        }
+      } else {
         setIsLocalAuth(false);
       }
-    }
+    };
+    
+    checkAuth();
     setIsLoading(false);
+    
+    // Listen for storage changes (from other tabs or this tab)
+    window.addEventListener("storage", checkAuth);
+    
+    // Listen for custom events from same page
+    window.addEventListener("authChange", checkAuth);
+    
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("authChange", checkAuth);
+    };
   }, []);
 
   if (isLoading) {

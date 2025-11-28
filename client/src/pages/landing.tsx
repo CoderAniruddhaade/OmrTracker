@@ -30,12 +30,14 @@ export default function Landing() {
         name: trimmedName,
         timestamp: Date.now() 
       }));
+      // Dispatch auth change event
+      window.dispatchEvent(new Event("authChange"));
       setIsAuthenticated(true);
       setError("");
       setPassword("");
       setFirstName("");
       // Navigate to home page
-      setTimeout(() => setLocation("/"), 100);
+      setTimeout(() => setLocation("/"), 50);
     } else {
       setError("Fuckoff invalid password");
       setPassword("");
