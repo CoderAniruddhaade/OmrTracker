@@ -5,88 +5,234 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const PASSWORD = "Sanskruti";
-const ALLOWED_NAMES: string[] = []; // Allow all users
+import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { toast } = useToast();
+  const [view, setView] = useState<"landing" | "login" | "register">("landing");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [error, setError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === PASSWORD) {
-      const trimmedName = firstName.trim();
-      if (!trimmedName) {
-        setError("Please enter your first name");
+    if (!username || !password) {
+      toast({ title: "Error", description: "Username and password required", variant: "destructive" });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        toast({ title: "Error", description: error.message || "Login failed", variant: "destructive" });
+        setPassword("");
         return;
       }
-      // Store auth in localStorage
-      localStorage.setItem("omr_auth", JSON.stringify({ 
-        authenticated: true, 
-        name: trimmedName,
-        timestamp: Date.now() 
+
+      const user = await res.json();
+      localStorage.setItem("omr_auth", JSON.stringify({
+        authenticated: true,
+        id: user.id,
+        username: user.username,
+        name: user.firstName || user.username,
+        timestamp: Date.now(),
       }));
-      // Dispatch auth change event
       window.dispatchEvent(new Event("authChange"));
-      setIsAuthenticated(true);
-      setError("");
+      setUsername("");
       setPassword("");
-      setFirstName("");
-      // Navigate to home page
-      setTimeout(() => setLocation("/"), 50);
-    } else {
-      setError("Fuckoff invalid password");
-      setPassword("");
-      setFirstName("");
+      toast({ title: "Success", description: `Welcome, ${user.firstName}!` });
+      setTimeout(() => setLocation("/"), 100);
+    } catch (error) {
+      toast({ title: "Error", description: "Login failed", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isAuthenticated) {
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password || !confirmPassword) {
+      toast({ title: "Error", description: "All fields required", variant: "destructive" });
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast({ title: "Error", description: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        toast({ title: "Error", description: error.message || "Registration failed", variant: "destructive" });
+        return;
+      }
+
+      const user = await res.json();
+      localStorage.setItem("omr_auth", JSON.stringify({
+        authenticated: true,
+        id: user.id,
+        username: user.username,
+        name: user.firstName || user.username,
+        timestamp: Date.now(),
+      }));
+      window.dispatchEvent(new Event("authChange"));
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
+      toast({ title: "Success", description: "Account created! Welcome!" });
+      setTimeout(() => setLocation("/"), 100);
+    } catch (error) {
+      toast({ title: "Error", description: "Registration failed", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (view === "login") {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-8">
-        <Card className="w-full max-w-sm mb-6">
+        <Card className="w-full max-w-sm">
           <CardContent className="pt-6">
             <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-md bg-primary flex items-center justify-center mx-auto mb-3">
-                <ClipboardCheck className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <h1 className="text-2xl font-bold">OMR Tracker</h1>
-              <p className="text-sm text-muted-foreground mt-2">Enter your details to access</p>
+              <h1 className="text-2xl font-bold">Sign In</h1>
+              <p className="text-sm text-muted-foreground mt-1">Access your OMR Tracker account</p>
             </div>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Enter your name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  data-testid="input-firstname"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  data-testid="input-password"
-                />
-              </div>
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
-              <Button type="submit" className="w-full" data-testid="button-unlock">
-                Sign In
+            <form onSubmit={handleLogin} className="space-y-4">
+              <Input
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                data-testid="input-login-username"
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                data-testid="input-login-password"
+              />
+              <Button type="submit" className="w-full" disabled={loading} data-testid="button-login">
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <button
+                onClick={() => {
+                  setView("register");
+                  setUsername("");
+                  setPassword("");
+                }}
+                className="text-primary hover:underline"
+                data-testid="button-go-register"
+              >
+                Create one
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() => {
+                setView("landing");
+                setUsername("");
+                setPassword("");
+              }}
+              data-testid="button-back-landing"
+            >
+              Back
+            </Button>
           </CardContent>
         </Card>
-        <p className="text-xs text-muted-foreground">Test with any username</p>
+      </div>
+    );
+  }
+
+  if (view === "register") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-8">
+        <Card className="w-full max-w-sm">
+          <CardContent className="pt-6">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold">Create Account</h1>
+              <p className="text-sm text-muted-foreground mt-1">Join OMR Tracker</p>
+            </div>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <Input
+                placeholder="Choose username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                data-testid="input-register-username"
+              />
+              <Input
+                type="password"
+                placeholder="Create password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                data-testid="input-register-password"
+              />
+              <Input
+                type="password"
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                data-testid="input-register-confirm"
+              />
+              <Button type="submit" className="w-full" disabled={loading} data-testid="button-register">
+                {loading ? "Creating account..." : "Create Account"}
+              </Button>
+            </form>
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <button
+                onClick={() => {
+                  setView("login");
+                  setUsername("");
+                  setPassword("");
+                  setConfirmPassword("");
+                }}
+                className="text-primary hover:underline"
+                data-testid="button-go-login"
+              >
+                Sign in
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() => {
+                setView("landing");
+                setUsername("");
+                setPassword("");
+                setConfirmPassword("");
+              }}
+              data-testid="button-back-landing2"
+            >
+              Back
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -118,17 +264,30 @@ export default function Landing() {
               Mark what you've done, what you've practiced, and see how you compare with others.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <Button size="lg" onClick={() => {
-                localStorage.setItem("omr_auth", JSON.stringify({ 
-                  authenticated: true, 
-                  name: "Guest",
-                  timestamp: Date.now() 
-                }));
-                setLocation("/");
-              }} className="text-sm sm:text-base" data-testid="button-get-started">
-                Access Dashboard
+              <Button
+                size="lg"
+                onClick={() => setView("login")}
+                className="text-sm sm:text-base"
+                data-testid="button-sign-in"
+              >
+                Sign In
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-sm sm:text-base" data-testid="button-moderator-panel">
+              <Button
+                size="lg"
+                onClick={() => setView("register")}
+                variant="outline"
+                className="text-sm sm:text-base"
+                data-testid="button-create-account"
+              >
+                Create Account
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="text-sm sm:text-base"
+                data-testid="button-moderator"
+              >
                 <a href="/moderator">Moderator Panel</a>
               </Button>
             </div>

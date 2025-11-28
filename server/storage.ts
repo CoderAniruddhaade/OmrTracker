@@ -26,6 +26,8 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  registerUser(username: string, passwordHash: string): Promise<User>;
   
   // OMR Sheet operations
   createOmrSheet(sheet: InsertOmrSheet): Promise<OmrSheet>;
@@ -69,6 +71,23 @@ export class DatabaseStorage implements IStorage {
           ...userData,
           updatedAt: new Date(),
         },
+      })
+      .returning();
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async registerUser(username: string, passwordHash: string): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        username,
+        passwordHash,
+        firstName: username,
       })
       .returning();
     return user;

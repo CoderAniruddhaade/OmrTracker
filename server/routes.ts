@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
+import * as bcrypt from "bcryptjs";
 
 // Validation schema for OMR sheet submission
 const chapterDataSchema = z.object({
@@ -29,6 +30,62 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // User registration
+  app.post("/api/auth/register", async (req: any, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+      
+      // Check if user already exists
+      const existing = await storage.getUserByUsername(username);
+      if (existing) {
+        return res.status(409).json({ message: "Username already taken" });
+      }
+      
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
+      
+      // Create user
+      const user = await storage.registerUser(username, passwordHash);
+      res.status(201).json({ id: user.id, username: user.username, firstName: user.firstName });
+    } catch (error) {
+      console.error("Error registering user:", error);
+      res.status(500).json({ message: "Failed to register" });
+    }
+  });
+
+  // User login
+  app.post("/api/auth/login", async (req: any, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+      
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Verify password
+      const isValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Return user info (frontend will store in localStorage)
+      res.json({ id: user.id, username: user.username, firstName: user.firstName });
+    } catch (error) {
+      console.error("Error logging in:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
 
   // Auth routes - returns null if not authenticated (NOT 401)
   // This allows frontend to check auth state without error
