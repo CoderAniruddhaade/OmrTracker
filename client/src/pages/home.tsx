@@ -7,7 +7,7 @@ import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users } fro
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
-import ProChat from "@/components/pro-chat";
+import Bakchodi from "@/components/pro-chat";
 import UsersDirectory from "@/components/users-directory";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -182,7 +182,7 @@ export default function Home() {
                     <ActivityFeed />
                   </div>
                   <div>
-                    <ProChat />
+                    <Bakchodi />
                   </div>
                 </div>
               </TabsContent>
@@ -192,7 +192,7 @@ export default function Home() {
                   <OMRSheetForm />
                 </div>
                 <div>
-                  <ProChat />
+                  <Bakchodi />
                 </div>
               </TabsContent>
 

@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { ChatMessage, WhisperMessage } from "@shared/schema";
 
 
-export default function ProChat() {
+export default function Bakchodi() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
@@ -142,7 +142,7 @@ export default function ProChat() {
     <Card className="h-96 sm:h-[600px] flex flex-col">
       <CardHeader className="pb-3 sm:pb-4">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base sm:text-lg">Pro Chat & Whisper</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Bakchodi</CardTitle>
           <Badge variant="outline" className="text-xs sm:text-sm flex items-center gap-1">
             <MessageCircle className="w-3 h-3" />
             {onlineUserIds.length} Online
@@ -153,8 +153,8 @@ export default function ProChat() {
       <CardContent className="flex-1 flex flex-col gap-3 sm:gap-4 p-3 sm:p-6">
         <Tabs defaultValue="public" className="flex flex-col flex-1">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="public">Public Chat</TabsTrigger>
-            <TabsTrigger value="whisper">Whisper (DM)</TabsTrigger>
+            <TabsTrigger value="public">General</TabsTrigger>
+            <TabsTrigger value="whisper">Bakchodi</TabsTrigger>
           </TabsList>
 
           <TabsContent value="public" className="flex flex-col flex-1 gap-3">
