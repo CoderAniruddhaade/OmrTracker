@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const PASSWORD = "NEETKeLavde";
+const PASSWORD = "Sanskruti";
 const ALLOWED_NAMES = ["Aniruddha"];
 
 export default function Landing() {
