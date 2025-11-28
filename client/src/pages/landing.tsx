@@ -30,6 +30,12 @@ export default function Landing() {
         setPassword("");
         return;
       }
+      // Store auth in localStorage
+      localStorage.setItem("omr_auth", JSON.stringify({ 
+        authenticated: true, 
+        name: trimmedName,
+        timestamp: Date.now() 
+      }));
       setIsAuthenticated(true);
       setError("");
       setPassword("");

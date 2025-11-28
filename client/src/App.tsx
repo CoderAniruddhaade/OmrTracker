@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -12,8 +13,8 @@ import UserProfile from "@/pages/user-profile";
 import MySheets from "@/pages/my-sheets";
 import Moderator from "@/pages/moderator";
 
-function ProtectedRoute({ component: Component, ...props }: { component: React.ComponentType<any>, [key: string]: any }) {
-  const { isAuthenticated, isLoading } = useAuth();
+function ProtectedRoute({ component: Component, isAuth, ...props }: { component: React.ComponentType<any>, isAuth: boolean, [key: string]: any }) {
+  const { isLoading } = useAuth();
   
   if (isLoading) {
     return (
@@ -23,7 +24,7 @@ function ProtectedRoute({ component: Component, ...props }: { component: React.C
     );
   }
   
-  if (!isAuthenticated) {
+  if (!isAuth) {
     return <Redirect to="/" />;
   }
   
@@ -32,6 +33,19 @@ function ProtectedRoute({ component: Component, ...props }: { component: React.C
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isLocalAuth, setIsLocalAuth] = useState(false);
+
+  useEffect(() => {
+    const auth = localStorage.getItem("omr_auth");
+    if (auth) {
+      try {
+        const parsed = JSON.parse(auth);
+        setIsLocalAuth(parsed.authenticated === true);
+      } catch (e) {
+        setIsLocalAuth(false);
+      }
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -41,16 +55,19 @@ function Router() {
     );
   }
 
+  // Use local auth if available, otherwise fall back to API auth
+  const authenticated = isLocalAuth || isAuthenticated;
+
   return (
     <Switch>
       <Route path="/">
-        {isAuthenticated ? <Home /> : <Landing />}
+        {authenticated ? <Home /> : <Landing />}
       </Route>
       <Route path="/my-sheets">
-        <ProtectedRoute component={MySheets} />
+        <ProtectedRoute component={MySheets} isAuth={authenticated} />
       </Route>
       <Route path="/user/:userId">
-        {(params) => <ProtectedRoute component={UserProfile} userId={params.userId} />}
+        {(params) => <ProtectedRoute component={UserProfile} userId={params.userId} isAuth={authenticated} />}
       </Route>
       <Route path="/moderator">
         <Moderator />

@@ -66,11 +66,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
-            <Button size="sm" variant="outline" asChild data-testid="button-logout" className="text-xs sm:text-sm">
-              <a href="/">
-                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </a>
+            <Button size="sm" variant="outline" onClick={() => {
+              localStorage.removeItem("omr_auth");
+              window.location.href = "/";
+            }} data-testid="button-logout" className="text-xs sm:text-sm">
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
