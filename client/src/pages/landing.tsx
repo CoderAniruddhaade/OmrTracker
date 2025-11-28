@@ -5,21 +5,36 @@ import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
 
 const PASSWORD = "NEETKeLavde";
+const ALLOWED_NAMES = ["Aniruddha", "Pranav"];
 
 export default function Landing() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [error, setError] = useState("");
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === PASSWORD) {
+      const trimmedName = firstName.trim();
+      if (!trimmedName) {
+        setError("Please enter your first name");
+        return;
+      }
+      if (!ALLOWED_NAMES.includes(trimmedName)) {
+        setError("Access denied. Only Aniruddha and Pranav are allowed.");
+        setFirstName("");
+        setPassword("");
+        return;
+      }
       setIsAuthenticated(true);
       setError("");
       setPassword("");
+      setFirstName("");
     } else {
       setError("Incorrect password");
       setPassword("");
+      setFirstName("");
     }
   };
 
@@ -38,12 +53,21 @@ export default function Landing() {
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
                 <Input
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  data-testid="input-firstname"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Input
                   type="password"
                   placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   data-testid="input-password"
-                  autoFocus
                 />
               </div>
               {error && (

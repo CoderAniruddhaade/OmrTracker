@@ -109,17 +109,17 @@ export default function UserProfile({ userId }: UserProfileProps) {
   const totalSheets = sheets.length;
   
   const totalDone = sheets.reduce((acc, sheet) => {
-    return acc + 
-      sheet.physics.questions.filter(q => q.done).length +
-      sheet.chemistry.questions.filter(q => q.done).length +
-      sheet.biology.questions.filter(q => q.done).length;
+    const phDone = Object.values(sheet.physics.chapters || {}).filter(q => q.done).length;
+    const chDone = Object.values(sheet.chemistry.chapters || {}).filter(q => q.done).length;
+    const biDone = Object.values(sheet.biology.chapters || {}).filter(q => q.done).length;
+    return acc + phDone + chDone + biDone;
   }, 0);
 
   const totalPracticed = sheets.reduce((acc, sheet) => {
-    return acc + 
-      sheet.physics.questions.filter(q => q.practiced).length +
-      sheet.chemistry.questions.filter(q => q.practiced).length +
-      sheet.biology.questions.filter(q => q.practiced).length;
+    const phPr = Object.values(sheet.physics.chapters || {}).filter(q => q.practiced).length;
+    const chPr = Object.values(sheet.chemistry.chapters || {}).filter(q => q.practiced).length;
+    const biPr = Object.values(sheet.biology.chapters || {}).filter(q => q.practiced).length;
+    return acc + phPr + chPr + biPr;
   }, 0);
 
   const avgCompletion = totalSheets > 0 
@@ -295,19 +295,25 @@ function SubjectStats({ sheets, subject, icon: Icon, colorVar, label }: SubjectS
 }
 
 function SheetHistoryItem({ sheet }: { sheet: OmrSheetWithUser }) {
-  const physicsProgress = (sheet.physics.questions.filter(q => q.done).length / 8) * 100;
-  const chemistryProgress = (sheet.chemistry.questions.filter(q => q.done).length / 8) * 100;
-  const biologyProgress = (sheet.biology.questions.filter(q => q.done).length / 8) * 100;
+  const physicsChapters = Object.values(sheet.physics.chapters || {});
+  const chemistryChapters = Object.values(sheet.chemistry.chapters || {});
+  const biologyChapters = Object.values(sheet.biology.chapters || {});
+
+  const physicsProgress = physicsChapters.length > 0 ? (physicsChapters.filter(q => q.done).length / physicsChapters.length) * 100 : 0;
+  const chemistryProgress = chemistryChapters.length > 0 ? (chemistryChapters.filter(q => q.done).length / chemistryChapters.length) * 100 : 0;
+  const biologyProgress = biologyChapters.length > 0 ? (biologyChapters.filter(q => q.done).length / biologyChapters.length) * 100 : 0;
 
   const totalDone = 
-    sheet.physics.questions.filter(q => q.done).length +
-    sheet.chemistry.questions.filter(q => q.done).length +
-    sheet.biology.questions.filter(q => q.done).length;
+    physicsChapters.filter(q => q.done).length +
+    chemistryChapters.filter(q => q.done).length +
+    biologyChapters.filter(q => q.done).length;
 
   const totalPracticed = 
-    sheet.physics.questions.filter(q => q.practiced).length +
-    sheet.chemistry.questions.filter(q => q.practiced).length +
-    sheet.biology.questions.filter(q => q.practiced).length;
+    physicsChapters.filter(q => q.practiced).length +
+    chemistryChapters.filter(q => q.practiced).length +
+    biologyChapters.filter(q => q.practiced).length;
+
+  const totalChapters = physicsChapters.length + chemistryChapters.length + biologyChapters.length;
 
   return (
     <div className="p-4 rounded-md border border-border bg-card/50">
@@ -319,7 +325,7 @@ function SheetHistoryItem({ sheet }: { sheet: OmrSheetWithUser }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Badge variant="outline">{totalDone}/24</Badge>
+          <Badge variant="outline">{totalDone}/{totalChapters}</Badge>
           {totalPracticed > 0 && (
             <Badge 
               variant="secondary"

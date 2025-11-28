@@ -11,7 +11,6 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
   const margin = 15;
   let yPosition = margin;
 
-  // Title
   doc.setFontSize(20);
   doc.text("OMR Sheet Report", margin, yPosition);
   
@@ -27,7 +26,6 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
   yPosition += 12;
   doc.setTextColor(0);
 
-  // Subject sections
   const subjects = [
     { title: "Physics", data: sheet.physics, color: [215, 75, 50] },
     { title: "Chemistry", data: sheet.chemistry, color: [150, 60, 40] },
@@ -35,13 +33,11 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
   ];
 
   for (const subject of subjects) {
-    // Check if we need a new page
     if (yPosition > pageHeight - 40) {
       doc.addPage();
       yPosition = margin;
     }
 
-    // Subject header
     doc.setFontSize(14);
     doc.setTextColor(subject.color[0], subject.color[1], subject.color[2]);
     doc.text(`${subject.title}`, margin, yPosition);
@@ -50,11 +46,9 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
     doc.setFontSize(10);
     doc.setTextColor(80);
     
-    // Present questions
     doc.text(`Questions Present: ${subject.data.present}`, margin + 5, yPosition);
     yPosition += 6;
 
-    // Chapters
     const chapters = Object.entries(subject.data.chapters || {});
     doc.text("Chapters:", margin + 5, yPosition);
     yPosition += 5;
@@ -80,7 +74,6 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
     yPosition += 5;
   }
 
-  // Summary
   if (yPosition > pageHeight - 30) {
     doc.addPage();
     yPosition = margin;
@@ -112,7 +105,6 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
   yPosition += 6;
   doc.text(`Biology: ${biologyDone}/${biologyChapters.length}`, margin + 5, yPosition);
 
-  // Download
   doc.save(`${userName}-${sheet.name}-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
@@ -148,28 +140,16 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
           children: [new TextRun({ text: "OMR Sheet Report", bold: true, size: 40 })],
           spacing: { after: 200 },
         }),
-        new Paragraph({
-          text: `User: ${userName}`,
-          spacing: { after: 100 },
-        }),
-        new Paragraph({
-          text: `Date: ${new Date(sheet.createdAt!).toLocaleDateString()}`,
-          spacing: { after: 100 },
-        }),
-        new Paragraph({
-          text: `Sheet Name: ${sheet.name}`,
-          spacing: { after: 300 },
-        }),
+        new Paragraph(`User: ${userName}`),
+        new Paragraph(`Date: ${new Date(sheet.createdAt!).toLocaleDateString()}`),
+        new Paragraph(`Sheet Name: ${sheet.name}`),
+        new Paragraph({ spacing: { after: 300 } }),
 
-        // Physics section
         new Paragraph({
           children: [new TextRun({ text: "Physics", bold: true, size: 32 })],
           spacing: { after: 100 },
         }),
-        new Paragraph({
-          text: `Questions Present: ${sheet.physics.present}`,
-          spacing: { after: 100 },
-        }),
+        new Paragraph(`Questions Present: ${sheet.physics.present}`),
         new Table({
           width: { size: 100, type: "pct" },
           rows: [
@@ -185,15 +165,11 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         }),
         new Paragraph({ spacing: { after: 200 } }),
 
-        // Chemistry section
         new Paragraph({
           children: [new TextRun({ text: "Chemistry", bold: true, size: 32 })],
           spacing: { after: 100 },
         }),
-        new Paragraph({
-          text: `Questions Present: ${sheet.chemistry.present}`,
-          spacing: { after: 100 },
-        }),
+        new Paragraph(`Questions Present: ${sheet.chemistry.present}`),
         new Table({
           width: { size: 100, type: "pct" },
           rows: [
@@ -209,15 +185,11 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         }),
         new Paragraph({ spacing: { after: 200 } }),
 
-        // Biology section
         new Paragraph({
           children: [new TextRun({ text: "Biology", bold: true, size: 32 })],
           spacing: { after: 100 },
         }),
-        new Paragraph({
-          text: `Questions Present: ${sheet.biology.present}`,
-          spacing: { after: 100 },
-        }),
+        new Paragraph(`Questions Present: ${sheet.biology.present}`),
         new Table({
           width: { size: 100, type: "pct" },
           rows: [
@@ -233,7 +205,6 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         }),
         new Paragraph({ spacing: { after: 300 } }),
 
-        // Summary
         new Paragraph({
           children: [new TextRun({ text: "Summary", bold: true, size: 32 })],
           spacing: { after: 100 },
@@ -257,7 +228,6 @@ export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
   const margin = 15;
   let yPosition = margin;
 
-  // Title
   doc.setFontSize(20);
   doc.text("Comparative OMR Report", margin, yPosition);
   
@@ -270,13 +240,10 @@ export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
   yPosition += 15;
   doc.setTextColor(0);
 
-  // Create comparison table
   const tableData: string[][] = [];
   
-  // Header
   tableData.push(["User", "Physics", "Chemistry", "Biology", "Total Done", "Completion %"]);
 
-  // Data rows
   for (const sheet of sheets) {
     const physicsDone = Object.values(sheet.physics.chapters || {}).filter(ch => ch.done).length;
     const chemistryDone = Object.values(sheet.chemistry.chapters || {}).filter(ch => ch.done).length;
@@ -304,7 +271,6 @@ export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
     ]);
   }
 
-  // Add table
   (doc as any).autoTable({
     head: [tableData[0]],
     body: tableData.slice(1),
@@ -383,14 +349,9 @@ export async function exportComparativeReportWord(sheets: OmrSheetWithUser[]) {
           children: [new TextRun({ text: "Comparative OMR Report", bold: true, size: 40 })],
           spacing: { after: 200 },
         }),
-        new Paragraph({
-          text: `Generated: ${new Date().toLocaleDateString()}`,
-          spacing: { after: 100 },
-        }),
-        new Paragraph({
-          text: `Total Users: ${sheets.length}`,
-          spacing: { after: 300 },
-        }),
+        new Paragraph(`Generated: ${new Date().toLocaleDateString()}`),
+        new Paragraph(`Total Users: ${sheets.length}`),
+        new Paragraph({ spacing: { after: 300 } }),
         new Table({
           width: { size: 100, type: "pct" },
           rows: rows,
