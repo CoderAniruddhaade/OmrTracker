@@ -19,10 +19,14 @@ export default function Settings() {
 
   const profileMutation = useMutation({
     mutationFn: async () => {
+      const auth = localStorage.getItem("omr_auth");
+      const parsed = auth ? JSON.parse(auth) : {};
+      const userId = parsed.userId;
+      
       const res = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName: firstName || undefined, lastName: lastName || undefined }),
+        body: JSON.stringify({ userId, firstName: firstName || undefined, lastName: lastName || undefined }),
       });
       if (!res.ok) throw new Error("Failed to update profile");
       return res.json();
@@ -43,10 +47,14 @@ export default function Settings() {
       if (newPassword !== confirmPassword) {
         throw new Error("Passwords do not match");
       }
+      const auth = localStorage.getItem("omr_auth");
+      const parsed = auth ? JSON.parse(auth) : {};
+      const userId = parsed.userId;
+      
       const res = await fetch("/api/auth/password", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ userId, currentPassword, newPassword }),
       });
       if (!res.ok) {
         const error = await res.json();

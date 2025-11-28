@@ -103,10 +103,15 @@ export async function registerRoutes(
     }
   });
 
-  // Update user profile (name)
-  app.patch("/api/auth/profile", isAuthenticated, async (req: any, res) => {
+  // Update user profile (name) - works with local auth
+  app.patch("/api/auth/profile", async (req: any, res) => {
     try {
-      const userId = req.userId || req.user?.claims?.sub;
+      const userId = req.body.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       const { firstName, lastName } = req.body;
       
       const user = await storage.updateUserProfile(userId, firstName, lastName);
@@ -117,10 +122,15 @@ export async function registerRoutes(
     }
   });
 
-  // Update user password
-  app.patch("/api/auth/password", isAuthenticated, async (req: any, res) => {
+  // Update user password - works with local auth
+  app.patch("/api/auth/password", async (req: any, res) => {
     try {
-      const userId = req.userId || req.user?.claims?.sub;
+      const userId = req.body.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       const { currentPassword, newPassword } = req.body;
       
       if (!currentPassword || !newPassword) {
