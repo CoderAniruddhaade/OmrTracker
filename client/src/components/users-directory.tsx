@@ -37,13 +37,24 @@ export default function UsersDirectory() {
     );
   }
 
-  // Create a map of online user IDs for quick lookup
-  const onlineUserMap = new Map(onlineUsersData.map(u => [u.userId, u.isOnline]));
+  // Create a map of online user IDs for quick lookup with timeout check
+  const OFFLINE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  const now = new Date().getTime();
+  
+  const onlineUserMap = new Map(
+    onlineUsersData
+      .filter(u => {
+        // Check if user is still "online" based on lastSeen timestamp
+        const lastSeenTime = new Date(u.lastSeen).getTime();
+        return u.isOnline && (now - lastSeenTime) < OFFLINE_TIMEOUT;
+      })
+      .map(u => [u.userId, true])
+  );
   
   // Update users with real-time online status
   const usersWithLiveStatus = allUsers.map(user => ({
     ...user,
-    isOnline: onlineUserMap.get(user.id) ?? false,
+    isOnline: onlineUserMap.has(user.id),
   }));
 
   const onlineUsers = usersWithLiveStatus.filter(u => u.isOnline);
