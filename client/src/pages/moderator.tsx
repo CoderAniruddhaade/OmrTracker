@@ -62,8 +62,8 @@ export default function Moderator() {
   });
 
   const { data: allUsers = [], refetch: refetchUsers } = useQuery<ModUser[]>({
-    queryKey: ["/api/moderator/users", authType, secretRevealed],
-    enabled: authType === "admin" || secretRevealed,
+    queryKey: ["/api/moderator/users", authType],
+    enabled: authType === "admin",
     queryFn: async () => {
       const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch users");
