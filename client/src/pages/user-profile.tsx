@@ -156,10 +156,9 @@ export default function UserProfile({ userId }: UserProfileProps) {
               </Avatar>
               
               <div className="flex-1 text-center sm:text-left">
-                <h1 className="text-2xl font-bold mb-1" data-testid="text-profile-name">
+                <h1 className="text-2xl font-bold mb-4" data-testid="text-profile-name">
                   {userName}
                 </h1>
-                <p className="text-muted-foreground mb-4">{user.email}</p>
                 
                 <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
                   <Badge variant="outline" className="py-1.5 px-3">

@@ -96,7 +96,6 @@ export default function UserStats({ user, isLoading }: UserStatsProps) {
           </Avatar>
           <div>
             <CardTitle className="text-lg" data-testid="text-current-user-name">{userName}</CardTitle>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
       </CardHeader>
