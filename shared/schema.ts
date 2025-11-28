@@ -126,9 +126,13 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Conversations table - groups private chat messages
+// Conversations table - groups private chat messages and group chats
 export const conversations = pgTable("conversations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  isGroupChat: boolean("is_group_chat").default(false).notNull(),
+  groupName: varchar("group_name"), // Only set if isGroupChat is true
+  groupIcon: varchar("group_icon"), // Icon/avatar for group
+  creatorId: varchar("creator_id"), // User ID who created the group
   participantIds: jsonb("participant_ids").$type<string[]>().notNull(), // Array of all participant user IDs
   lastMessageAt: timestamp("last_message_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),

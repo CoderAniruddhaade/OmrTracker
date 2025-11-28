@@ -67,6 +67,7 @@ export interface IStorage {
   
   // Conversation operations
   getOrCreateConversation(participantIds: string[]): Promise<Conversation>;
+  createGroupConversation(participantIds: string[], groupName: string, creatorId: string): Promise<Conversation>;
   getUserConversations(userId: string): Promise<(Conversation & { lastSender?: User; lastMessage?: string })[]>;
   
   // Whisper operations
@@ -438,6 +439,19 @@ export class DatabaseStorage implements IStorage {
     const [newConv] = await db
       .insert(conversations)
       .values({ participantIds: sortedIds })
+      .returning();
+    return newConv;
+  }
+
+  async createGroupConversation(participantIds: string[], groupName: string, creatorId: string): Promise<Conversation> {
+    const [newConv] = await db
+      .insert(conversations)
+      .values({ 
+        participantIds,
+        isGroupChat: true,
+        groupName,
+        creatorId,
+      })
       .returning();
     return newConv;
   }

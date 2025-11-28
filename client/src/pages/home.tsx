@@ -9,7 +9,7 @@ import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
 import Bakchodi from "@/components/pro-chat";
-import PrivateChat from "@/components/private-chat";
+import WhatsAppChat from "@/components/whatsapp-chat";
 import UsersDirectory from "@/components/users-directory";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -210,7 +210,7 @@ export default function Home() {
               </TabsContent>
 
               <TabsContent value="private-chat" className="mt-0">
-                <PrivateChat />
+                <WhatsAppChat />
               </TabsContent>
 
               <TabsContent value="users" className="mt-0">

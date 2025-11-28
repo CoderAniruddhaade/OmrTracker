@@ -521,6 +521,24 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/conversations/group", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { participantIds, groupName } = req.body;
+      
+      if (!Array.isArray(participantIds) || participantIds.length < 2 || !groupName?.trim()) {
+        return res.status(400).json({ message: "Invalid group data" });
+      }
+      
+      const allParticipants = [...new Set([userId, ...participantIds])];
+      const conversation = await storage.createGroupConversation(allParticipants, groupName, userId);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ message: "Failed to create group" });
+    }
+  });
+
   app.post("/api/conversations/:conversationId/messages", isAuthenticated, async (req: any, res) => {
     try {
       const senderId = req.userId || req.user?.claims?.sub;
