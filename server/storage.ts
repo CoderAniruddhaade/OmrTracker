@@ -426,10 +426,13 @@ export class DatabaseStorage implements IStorage {
   // Whisper operations
   async getOrCreateConversation(participantIds: string[]): Promise<Conversation> {
     const sortedIds = [...participantIds].sort();
-    const idString = JSON.stringify(sortedIds);
     
+    // Try to find existing 1-on-1 conversation with exact participant match
     const existing = await db.query.conversations.findFirst({
-      where: (conversations, { eq }) => eq(conversations.participantIds, sortedIds as any),
+      where: (c, { eq, and }) => and(
+        eq(c.isGroupChat, false),
+        sql`${c.participantIds} = ${JSON.stringify(sortedIds)}::jsonb`
+      ),
     });
     
     if (existing) {
@@ -438,7 +441,7 @@ export class DatabaseStorage implements IStorage {
     
     const [newConv] = await db
       .insert(conversations)
-      .values({ participantIds: sortedIds })
+      .values({ participantIds: sortedIds, isGroupChat: false })
       .returning();
     return newConv;
   }
@@ -461,7 +464,7 @@ export class DatabaseStorage implements IStorage {
       .selectDistinct()
       .from(conversations)
       .where((c) => {
-        return sql`${c.participantIds}::text[] @> ARRAY[${userId}]`;
+        return sql`${c.participantIds} @> jsonb_build_array(${userId})`;
       })
       .orderBy(desc(conversations.lastMessageAt))
       .limit(50);
@@ -519,36 +522,6 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
-  async getWhisperMessages(userId: string, limit: number = 50): Promise<(WhisperMessage & { user: User; reactions: any[] })[]> {
-    const results = await db
-      .select({
-        id: whisperMessages.id,
-        senderId: whisperMessages.senderId,
-        recipientIds: whisperMessages.recipientIds,
-        message: whisperMessages.message,
-        isDeleted: whisperMessages.isDeleted,
-        editedAt: whisperMessages.editedAt,
-        createdAt: whisperMessages.createdAt,
-        user: users,
-      })
-      .from(whisperMessages)
-      .leftJoin(users, eq(whisperMessages.senderId, users.id))
-      .where(eq(whisperMessages.isDeleted, false))
-      .orderBy(desc(whisperMessages.createdAt))
-      .limit(limit);
-    
-    return results.reverse().map(r => ({
-      id: r.id,
-      senderId: r.senderId,
-      recipientIds: r.recipientIds as string[],
-      message: r.message,
-      isDeleted: r.isDeleted,
-      editedAt: r.editedAt,
-      createdAt: r.createdAt,
-      user: r.user!,
-      reactions: [],
-    }));
-  }
 
   async updateWhisperMessage(id: string, message: string): Promise<WhisperMessage> {
     const [updated] = await db
