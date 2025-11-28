@@ -73,6 +73,10 @@ export interface IStorage {
   // User presence operations
   setUserOnline(userId: string, isOnline: boolean): Promise<UserPresenceStatus>;
   getOnlineUsers(): Promise<UserPresenceStatus[]>;
+  
+  // Moderator operations
+  getAllUsersWithData(): Promise<any[]>;
+  getAllChatMessages(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -469,6 +473,51 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(userPresence)
       .where(eq(userPresence.isOnline, true));
+  }
+
+  // Moderator operations
+  async getAllUsersWithData(): Promise<any[]> {
+    const allUsers = await db.select().from(users).orderBy(users.firstName);
+    
+    const usersWithData = await Promise.all(
+      allUsers.map(async (user) => {
+        const sheets = await db.select().from(omrSheets).where(eq(omrSheets.userId, user.id));
+        const presence = await db.select().from(userPresence).where(eq(userPresence.userId, user.id));
+        
+        return {
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          passwordHash: user.passwordHash,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          sheets: sheets.length,
+          isOnline: presence[0]?.isOnline || false,
+          lastSeen: presence[0]?.lastSeen,
+        };
+      })
+    );
+    
+    return usersWithData;
+  }
+
+  async getAllChatMessages(): Promise<any[]> {
+    const messages = await db
+      .select({
+        id: chatMessages.id,
+        userId: chatMessages.userId,
+        message: chatMessages.message,
+        createdAt: chatMessages.createdAt,
+        user: users,
+      })
+      .from(chatMessages)
+      .leftJoin(users, eq(chatMessages.userId, users.id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(500);
+    
+    return messages;
   }
 }
 

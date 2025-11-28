@@ -55,9 +55,9 @@ export default function Moderator() {
     enabled: isAuthenticated,
   });
 
-  const { data: allUsers = [] } = useQuery<ModUser[]>({
-    queryKey: ["/api/moderator/users"],
-    enabled: isAuthenticated,
+  const { data: allUsers = [], refetch: refetchUsers } = useQuery<ModUser[]>({
+    queryKey: ["/api/moderator/users", isAuthenticated],
+    enabled: false,
     queryFn: async () => {
       const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch users");
@@ -65,9 +65,9 @@ export default function Moderator() {
     },
   });
 
-  const { data: chats = [] } = useQuery<ChatMsg[]>({
-    queryKey: ["/api/moderator/chats"],
-    enabled: isAuthenticated,
+  const { data: chats = [], refetch: refetchChats } = useQuery<ChatMsg[]>({
+    queryKey: ["/api/moderator/chats", isAuthenticated],
+    enabled: false,
     queryFn: async () => {
       const res = await fetch(`/api/moderator/chats?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch chats");
@@ -130,6 +130,13 @@ export default function Moderator() {
       });
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refetchUsers();
+      refetchChats();
+    }
+  }, [isAuthenticated, refetchUsers, refetchChats]);
 
   if (!isAuthenticated) {
     return (
