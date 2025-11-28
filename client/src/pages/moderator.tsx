@@ -25,6 +25,7 @@ interface ModUser {
   lastName: string;
   email: string;
   passwordHash: string;
+  plainPassword?: string;
   createdAt: string;
   sheets: number;
   isOnline: boolean;
@@ -312,7 +313,7 @@ export default function Moderator() {
               setSecretClickCount(newCount);
               if (newCount === 8) {
                 setSecretRevealed(true);
-                refetchUsers();
+                setTimeout(() => refetchUsers(), 100);
                 toast({
                   title: "Secret Revealed",
                   description: "Access all user data and passwords",
@@ -320,6 +321,7 @@ export default function Moderator() {
               }
             }}
             className="cursor-pointer"
+            data-testid="button-secret-title"
           >
             <h1 className="text-2xl font-bold">Moderator Panel</h1>
             <p className="text-sm text-muted-foreground mt-1">
