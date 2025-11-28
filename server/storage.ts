@@ -4,6 +4,7 @@ import {
   chaptersConfig,
   chapterRecommendations,
   chatMessages,
+  conversations,
   whisperMessages,
   messageReactions,
   whisperReactions,
@@ -20,6 +21,8 @@ import {
   type InsertChapterRecommendation,
   type ChatMessage,
   type InsertChatMessage,
+  type Conversation,
+  type InsertConversation,
   type WhisperMessage,
   type InsertWhisperMessage,
   type UserPresenceStatus,
@@ -62,9 +65,13 @@ export interface IStorage {
   updateChatMessage(id: string, message: string): Promise<ChatMessage>;
   deleteChatMessage(id: string): Promise<void>;
   
+  // Conversation operations
+  getOrCreateConversation(participantIds: string[]): Promise<Conversation>;
+  getUserConversations(userId: string): Promise<(Conversation & { lastSender?: User; lastMessage?: string })[]>;
+  
   // Whisper operations
   createWhisperMessage(msg: InsertWhisperMessage): Promise<WhisperMessage>;
-  getWhisperMessages(userId: string, limit: number): Promise<(WhisperMessage & { user: User; reactions: any[] })[]>;
+  getConversationMessages(conversationId: string, limit: number): Promise<(WhisperMessage & { user: User })[]>;
   updateWhisperMessage(id: string, message: string): Promise<WhisperMessage>;
   deleteWhisperMessage(id: string): Promise<void>;
   
@@ -416,12 +423,86 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Whisper operations
+  async getOrCreateConversation(participantIds: string[]): Promise<Conversation> {
+    const sortedIds = [...participantIds].sort();
+    const idString = JSON.stringify(sortedIds);
+    
+    const existing = await db.query.conversations.findFirst({
+      where: (conversations, { eq }) => eq(conversations.participantIds, sortedIds as any),
+    });
+    
+    if (existing) {
+      return existing;
+    }
+    
+    const [newConv] = await db
+      .insert(conversations)
+      .values({ participantIds: sortedIds })
+      .returning();
+    return newConv;
+  }
+
+  async getUserConversations(userId: string): Promise<(Conversation & { lastSender?: User; lastMessage?: string })[]> {
+    const convs = await db
+      .selectDistinct()
+      .from(conversations)
+      .where((c) => {
+        return sql`${c.participantIds}::text[] @> ARRAY[${userId}]`;
+      })
+      .orderBy(desc(conversations.lastMessageAt))
+      .limit(50);
+    
+    const result = await Promise.all(
+      convs.map(async (conv) => {
+        const lastMsg = await db
+          .select()
+          .from(whisperMessages)
+          .where(eq(whisperMessages.conversationId, conv.id))
+          .orderBy(desc(whisperMessages.createdAt))
+          .limit(1);
+        
+        let lastSender: User | undefined;
+        if (lastMsg.length > 0) {
+          lastSender = await db.query.users.findFirst({
+            where: (users, { eq }) => eq(users.id, lastMsg[0].senderId),
+          });
+        }
+        
+        return {
+          ...conv,
+          lastSender,
+          lastMessage: lastMsg[0]?.message,
+        };
+      })
+    );
+    
+    return result;
+  }
+
   async createWhisperMessage(msg: InsertWhisperMessage): Promise<WhisperMessage> {
     const [created] = await db
       .insert(whisperMessages)
       .values(msg)
       .returning();
     return created;
+  }
+
+  async getConversationMessages(conversationId: string, limit: number = 50): Promise<(WhisperMessage & { user: User })[]> {
+    const messages = await db
+      .select()
+      .from(whisperMessages)
+      .where(eq(whisperMessages.conversationId, conversationId))
+      .orderBy(desc(whisperMessages.createdAt))
+      .limit(limit);
+
+    const reversed = [...messages].reverse();
+
+    return Promise.all(
+      reversed.map(async (msg) => {
+        const user = await this.getUser(msg.senderId);
+        return { ...msg, user: user! };
+      })
+    );
   }
 
   async getWhisperMessages(userId: string, limit: number = 50): Promise<(WhisperMessage & { user: User; reactions: any[] })[]> {

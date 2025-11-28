@@ -126,11 +126,19 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Whisper/DM messages table (private chats between 2-3 users)
+// Conversations table - groups private chat messages
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  participantIds: jsonb("participant_ids").$type<string[]>().notNull(), // Array of all participant user IDs
+  lastMessageAt: timestamp("last_message_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Whisper/DM messages table (private chats in conversations)
 export const whisperMessages = pgTable("whisper_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
   senderId: varchar("sender_id").notNull().references(() => users.id),
-  recipientIds: jsonb("recipient_ids").$type<string[]>().notNull(), // Array of 1-2 user IDs
   message: varchar("message").notNull(),
   isDeleted: boolean("is_deleted").default(false).notNull(),
   editedAt: timestamp("edited_at"),
@@ -196,6 +204,15 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   editedAt: true,
 });
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+// Conversation types
+export type Conversation = typeof conversations.$inferSelect;
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  lastMessageAt: true,
+  createdAt: true,
+});
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
 
 // Whisper message types
 export type WhisperMessage = typeof whisperMessages.$inferSelect;

@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users, Settings } from "lucide-react";
+import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users, Settings, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
 import Bakchodi from "@/components/pro-chat";
+import PrivateChat from "@/components/private-chat";
 import UsersDirectory from "@/components/users-directory";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -129,7 +130,7 @@ export default function Home() {
           <div className="lg:col-span-3 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-                <TabsList className="grid w-full sm:w-auto grid-cols-3">
+                <TabsList className="grid w-full sm:w-auto grid-cols-4">
                   <TabsTrigger value="new-sheet" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-new-sheet">
                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">New Sheet</span>
@@ -139,6 +140,11 @@ export default function Home() {
                     <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">All Activity</span>
                     <span className="sm:hidden">Activity</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="private-chat" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-private-chat">
+                    <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Private Chat</span>
+                    <span className="sm:hidden">Chat</span>
                   </TabsTrigger>
                   <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-users">
                     <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -201,6 +207,10 @@ export default function Home() {
                 <div>
                   <Bakchodi />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="private-chat" className="mt-0">
+                <PrivateChat />
               </TabsContent>
 
               <TabsContent value="users" className="mt-0">

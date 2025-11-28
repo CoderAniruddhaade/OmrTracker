@@ -471,40 +471,79 @@ export async function registerRoutes(
     }
   });
 
-  // Whisper routes
-  app.get("/api/whispers", isAuthenticated, async (req: any, res) => {
+  // Whisper/Conversation routes
+  app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.userId || req.user?.claims?.sub;
-      const messages = await storage.getWhisperMessages(userId, 100);
-      res.json(messages);
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
     } catch (error) {
-      console.error("Error fetching whispers:", error);
-      res.status(500).json({ message: "Failed to fetch whispers" });
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
     }
   });
 
-  app.post("/api/whispers", isAuthenticated, async (req: any, res) => {
+  app.get("/api/conversations/:conversationId/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const messages = await storage.getConversationMessages(req.params.conversationId, 100);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/conversations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { participantIds } = req.body;
+      
+      if (!Array.isArray(participantIds) || participantIds.length === 0) {
+        return res.status(400).json({ message: "Invalid participants" });
+      }
+      
+      const allParticipants = [...new Set([userId, ...participantIds])];
+      const conversation = await storage.getOrCreateConversation(allParticipants);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ message: "Failed to create conversation" });
+    }
+  });
+
+  app.post("/api/conversations/:conversationId/messages", isAuthenticated, async (req: any, res) => {
     try {
       const senderId = req.userId || req.user?.claims?.sub;
-      const { recipientIds, message } = req.body;
+      const { message } = req.body;
       
       if (!message || typeof message !== "string" || message.trim().length === 0) {
         return res.status(400).json({ message: "Message cannot be empty" });
       }
 
-      if (!Array.isArray(recipientIds) || recipientIds.length === 0 || recipientIds.length > 2) {
-        return res.status(400).json({ message: "Invalid recipients. Must be 1-2 users." });
-      }
-
       const msg = await storage.createWhisperMessage({
+        conversationId: req.params.conversationId,
         senderId,
-        recipientIds,
         message: message.trim().substring(0, 1000),
       });
       res.status(201).json(msg);
     } catch (error) {
-      console.error("Error creating whisper:", error);
-      res.status(500).json({ message: "Failed to send whisper" });
+      console.error("Error creating message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Legacy whispers endpoint (for backward compatibility during transition)
+  app.get("/api/whispers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const conversations = await storage.getUserConversations(userId);
+      const messages = conversations.flatMap(c => 
+        c.lastMessage ? [{ id: c.id, senderId: c.lastSender?.id, message: c.lastMessage }] : []
+      );
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching whispers:", error);
+      res.status(500).json({ message: "Failed to fetch whispers" });
     }
   });
 
