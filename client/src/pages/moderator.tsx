@@ -60,8 +60,8 @@ export default function Moderator() {
   });
 
   const { data: allUsers = [], refetch: refetchUsers } = useQuery<ModUser[]>({
-    queryKey: ["/api/moderator/users", isAuthenticated],
-    enabled: false,
+    queryKey: ["/api/moderator/users", authType],
+    enabled: authType === "admin",
     queryFn: async () => {
       const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch users");
@@ -70,8 +70,8 @@ export default function Moderator() {
   });
 
   const { data: chats = [], refetch: refetchChats } = useQuery<ChatMsg[]>({
-    queryKey: ["/api/moderator/chats", isAuthenticated],
-    enabled: false,
+    queryKey: ["/api/moderator/chats", authType],
+    enabled: authType === "admin",
     queryFn: async () => {
       const res = await fetch(`/api/moderator/chats?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch chats");
@@ -144,11 +144,11 @@ export default function Moderator() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (authType === "admin") {
       refetchUsers();
       refetchChats();
     }
-  }, [isAuthenticated, refetchUsers, refetchChats]);
+  }, [authType, refetchUsers, refetchChats]);
 
   if (!isAuthenticated) {
     return (
@@ -324,11 +324,9 @@ export default function Moderator() {
           </Button>
         </div>
 
-        <Tabs defaultValue={authType === "chapters" ? "chapters" : "users"} className="space-y-4">
-          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-2"}`}>
-            {authType === "chapters" && (
-              <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            )}
+        <Tabs defaultValue="chapters" className="space-y-4">
+          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-3"}`}>
+            <TabsTrigger value="chapters">Chapters</TabsTrigger>
             {authType === "admin" && (
               <>
                 <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
