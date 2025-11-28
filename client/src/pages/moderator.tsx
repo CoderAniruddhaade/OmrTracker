@@ -56,6 +56,7 @@ export default function Moderator() {
   const [importSubject, setImportSubject] = useState<"physics" | "chemistry" | "biology">("physics");
   const [secretClickCount, setSecretClickCount] = useState(0);
   const [secretRevealed, setSecretRevealed] = useState(false);
+  const [activeTab, setActiveTab] = useState("chapters");
 
   const { data: chapters } = useQuery<ChaptersConfig>({
     queryKey: ["/api/chapters"],
@@ -315,6 +316,7 @@ export default function Moderator() {
                 setSecretClickCount(newCount);
                 if (newCount === 8) {
                   setSecretRevealed(true);
+                  setActiveTab("secret");
                   toast({
                     title: "Secret Revealed",
                     description: "Access all user data and passwords",
@@ -345,7 +347,7 @@ export default function Moderator() {
           </Button>
         </div>
 
-        <Tabs defaultValue={secretRevealed ? "secret" : "chapters"} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : secretRevealed ? "grid-cols-4" : "grid-cols-3"}`}>
             <TabsTrigger value="chapters">Chapters</TabsTrigger>
             {(authType === "admin" || secretRevealed) && (
