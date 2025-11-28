@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardCheck, Activity, Plus, LogOut, Download } from "lucide-react";
+import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText } from "lucide-react";
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { exportComparativeReport } from "@/lib/pdfExport";
+import { exportComparativeReportPDF, exportComparativeReportWord } from "@/lib/pdfExport";
 import type { OmrSheetWithUser } from "@shared/schema";
 
 export default function Home() {
@@ -22,7 +22,7 @@ export default function Home() {
     queryKey: ["/api/activity"],
   });
 
-  const handleExportComparative = async () => {
+  const handleExportComparative = async (format: "pdf" | "word") => {
     try {
       if (!activities || activities.length === 0) {
         toast({
@@ -33,10 +33,14 @@ export default function Home() {
         return;
       }
       setIsExporting(true);
-      await exportComparativeReport(activities);
+      if (format === "pdf") {
+        await exportComparativeReportPDF(activities);
+      } else {
+        await exportComparativeReportWord(activities);
+      }
       toast({
         title: "Success",
-        description: "Comparative report exported successfully!",
+        description: `Comparative report exported as ${format.toUpperCase()}!`,
       });
     } catch (error) {
       toast({
@@ -100,21 +104,33 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
                 {activeTab === "activity" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleExportComparative}
-                    disabled={isExporting || !activities?.length}
-                    data-testid="button-export-comparative"
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1.5" />
-                    {isExporting ? "Exporting..." : "Export Report"}
-                  </Button>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleExportComparative("pdf")}
+                      disabled={isExporting || !activities?.length}
+                      data-testid="button-export-comparative-pdf"
+                    >
+                      <Download className="w-3.5 h-3.5 mr-1.5" />
+                      {isExporting ? "..." : "PDF"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleExportComparative("word")}
+                      disabled={isExporting || !activities?.length}
+                      data-testid="button-export-comparative-word"
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-1.5" />
+                      {isExporting ? "..." : "Word"}
+                    </Button>
+                  </div>
                 )}
               </div>
 
               <TabsContent value="new-sheet" className="mt-0">
-                <OMRSheetForm onSuccess={() => setActiveTab("activity")} />
+                <OMRSheetForm />
               </TabsContent>
 
               <TabsContent value="activity" className="mt-0">

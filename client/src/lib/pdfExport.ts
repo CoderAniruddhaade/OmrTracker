@@ -1,8 +1,10 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, BorderStyle, VerticalAlign, HeadingLevel, UnderlineType } from "docx";
+import { saveAs } from "file-saver";
 import type { OmrSheet, OmrSheetWithUser } from "@shared/schema";
 
-export async function exportIndividualReport(sheet: OmrSheet, userName: string) {
+export async function exportIndividualReportPDF(sheet: OmrSheet, userName: string) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.getHeight();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -114,7 +116,141 @@ export async function exportIndividualReport(sheet: OmrSheet, userName: string) 
   doc.save(`${userName}-${sheet.name}-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-export async function exportComparativeReport(sheets: OmrSheetWithUser[]) {
+export async function exportIndividualReportWord(sheet: OmrSheet, userName: string) {
+  const physicsChapters = Object.values(sheet.physics.chapters || {});
+  const chemistryChapters = Object.values(sheet.chemistry.chapters || {});
+  const biologyChapters = Object.values(sheet.biology.chapters || {});
+
+  const physicsDone = physicsChapters.filter(ch => ch.done).length;
+  const chemistryDone = chemistryChapters.filter(ch => ch.done).length;
+  const biologyDone = biologyChapters.filter(ch => ch.done).length;
+  const totalDone = physicsDone + chemistryDone + biologyDone;
+  const totalChapters = physicsChapters.length + chemistryChapters.length + biologyChapters.length;
+
+  const createChapterRows = (chapters: Record<string, any>) => {
+    return Object.entries(chapters).map(([name, data]) => {
+      const status = data.done ? (data.practiced ? "Done & Practiced" : "Done") : "Not Done";
+      const questionsPracticed = data.questionsPracticed || 0;
+      return new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph(name)] }),
+          new TableCell({ children: [new Paragraph(status)] }),
+          new TableCell({ children: [new Paragraph(questionsPracticed.toString())] }),
+        ],
+      });
+    });
+  };
+
+  const doc = new Document({
+    sections: [{
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: "OMR Sheet Report", bold: true, size: 40 })],
+          spacing: { after: 200 },
+        }),
+        new Paragraph({
+          text: `User: ${userName}`,
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Date: ${new Date(sheet.createdAt!).toLocaleDateString()}`,
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Sheet Name: ${sheet.name}`,
+          spacing: { after: 300 },
+        }),
+
+        // Physics section
+        new Paragraph({
+          children: [new TextRun({ text: "Physics", bold: true, size: 32 })],
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Questions Present: ${sheet.physics.present}`,
+          spacing: { after: 100 },
+        }),
+        new Table({
+          width: { size: 100, type: "pct" },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+              ],
+            }),
+            ...createChapterRows(sheet.physics.chapters || {}),
+          ],
+        }),
+        new Paragraph({ spacing: { after: 200 } }),
+
+        // Chemistry section
+        new Paragraph({
+          children: [new TextRun({ text: "Chemistry", bold: true, size: 32 })],
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Questions Present: ${sheet.chemistry.present}`,
+          spacing: { after: 100 },
+        }),
+        new Table({
+          width: { size: 100, type: "pct" },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+              ],
+            }),
+            ...createChapterRows(sheet.chemistry.chapters || {}),
+          ],
+        }),
+        new Paragraph({ spacing: { after: 200 } }),
+
+        // Biology section
+        new Paragraph({
+          children: [new TextRun({ text: "Biology", bold: true, size: 32 })],
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Questions Present: ${sheet.biology.present}`,
+          spacing: { after: 100 },
+        }),
+        new Table({
+          width: { size: 100, type: "pct" },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
+                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+              ],
+            }),
+            ...createChapterRows(sheet.biology.chapters || {}),
+          ],
+        }),
+        new Paragraph({ spacing: { after: 300 } }),
+
+        // Summary
+        new Paragraph({
+          children: [new TextRun({ text: "Summary", bold: true, size: 32 })],
+          spacing: { after: 100 },
+        }),
+        new Paragraph(`Chapters Completed: ${totalDone}/${totalChapters}`),
+        new Paragraph(`Physics: ${physicsDone}/${physicsChapters.length}`),
+        new Paragraph(`Chemistry: ${chemistryDone}/${chemistryChapters.length}`),
+        new Paragraph(`Biology: ${biologyDone}/${biologyChapters.length}`),
+      ],
+    }],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `${userName}-${sheet.name}-${new Date().toISOString().split('T')[0]}.docx`);
+}
+
+export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.getHeight();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -193,4 +329,76 @@ export async function exportComparativeReport(sheets: OmrSheetWithUser[]) {
   });
 
   doc.save(`comparative-report-${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+export async function exportComparativeReportWord(sheets: OmrSheetWithUser[]) {
+  const rows = [
+    new TableRow({
+      children: [
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "User", bold: true }))] }),
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "Physics", bold: true }))] }),
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "Chemistry", bold: true }))] }),
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "Biology", bold: true }))] }),
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "Total Done", bold: true }))] }),
+        new TableCell({ children: [new Paragraph(new TextRun({ text: "Completion %", bold: true }))] }),
+      ],
+    }),
+  ];
+
+  for (const sheet of sheets) {
+    const physicsDone = Object.values(sheet.physics.chapters || {}).filter(ch => ch.done).length;
+    const chemistryDone = Object.values(sheet.chemistry.chapters || {}).filter(ch => ch.done).length;
+    const biologyDone = Object.values(sheet.biology.chapters || {}).filter(ch => ch.done).length;
+    const totalDone = physicsDone + chemistryDone + biologyDone;
+    
+    const physicsCount = Object.keys(sheet.physics.chapters || {}).length;
+    const chemistryCount = Object.keys(sheet.chemistry.chapters || {}).length;
+    const biologyCount = Object.keys(sheet.biology.chapters || {}).length;
+    const totalChapters = physicsCount + chemistryCount + biologyCount;
+    
+    const completion = totalChapters > 0 ? Math.round((totalDone / totalChapters) * 100) : 0;
+
+    const userName = sheet.user?.firstName && sheet.user?.lastName
+      ? `${sheet.user.firstName} ${sheet.user.lastName}`
+      : sheet.user?.firstName || sheet.user?.email || "Unknown";
+
+    rows.push(
+      new TableRow({
+        children: [
+          new TableCell({ children: [new Paragraph(userName)] }),
+          new TableCell({ children: [new Paragraph(`${physicsDone}/${physicsCount}`)] }),
+          new TableCell({ children: [new Paragraph(`${chemistryDone}/${chemistryCount}`)] }),
+          new TableCell({ children: [new Paragraph(`${biologyDone}/${biologyCount}`)] }),
+          new TableCell({ children: [new Paragraph(totalDone.toString())] }),
+          new TableCell({ children: [new Paragraph(`${completion}%`)] }),
+        ],
+      })
+    );
+  }
+
+  const doc = new Document({
+    sections: [{
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: "Comparative OMR Report", bold: true, size: 40 })],
+          spacing: { after: 200 },
+        }),
+        new Paragraph({
+          text: `Generated: ${new Date().toLocaleDateString()}`,
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          text: `Total Users: ${sheets.length}`,
+          spacing: { after: 300 },
+        }),
+        new Table({
+          width: { size: 100, type: "pct" },
+          rows: rows,
+        }),
+      ],
+    }],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  saveAs(blob, `comparative-report-${new Date().toISOString().split('T')[0]}.docx`);
 }

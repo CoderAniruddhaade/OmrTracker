@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ClipboardCheck, Atom, FlaskConical, Leaf, Plus, Download } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Atom, FlaskConical, Leaf, Plus, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { OmrSheet } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { exportIndividualReport } from "@/lib/pdfExport";
+import { exportIndividualReportPDF, exportIndividualReportWord } from "@/lib/pdfExport";
 
 export default function MySheets() {
   const { toast } = useToast();
@@ -24,21 +24,27 @@ export default function MySheets() {
     queryKey: ["/api/my-sheets"],
   });
 
-  const handleExport = async (sheet: OmrSheet) => {
+  const handleExport = async (sheet: OmrSheet, format: "pdf" | "word") => {
     try {
       setExportingId(sheet.id);
       const userName = user?.firstName && user?.lastName
         ? `${user.firstName} ${user.lastName}`
         : user?.firstName || user?.email || "User";
-      await exportIndividualReport(sheet, userName);
+      
+      if (format === "pdf") {
+        await exportIndividualReportPDF(sheet, userName);
+      } else {
+        await exportIndividualReportWord(sheet, userName);
+      }
+      
       toast({
         title: "Success",
-        description: "PDF exported successfully!",
+        description: `${format.toUpperCase()} exported successfully!`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to export PDF",
+        description: `Failed to export ${format.toUpperCase()}`,
         variant: "destructive",
       });
     } finally {
@@ -143,7 +149,7 @@ export default function MySheets() {
 
 interface SheetCardProps {
   sheet: OmrSheet;
-  onExport: (sheet: OmrSheet) => Promise<void>;
+  onExport: (sheet: OmrSheet, format: "pdf" | "word") => Promise<void>;
   isExporting: boolean;
 }
 
@@ -198,12 +204,22 @@ function SheetCard({ sheet, onExport, isExporting }: SheetCardProps) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onExport(sheet)}
+            onClick={() => onExport(sheet, "pdf")}
             disabled={isExporting}
-            data-testid={`button-export-${sheet.id}`}
+            data-testid={`button-export-pdf-${sheet.id}`}
           >
             <Download className="w-3.5 h-3.5 mr-1.5" />
-            {isExporting ? "Exporting..." : "Export"}
+            {isExporting ? "..." : "PDF"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onExport(sheet, "word")}
+            disabled={isExporting}
+            data-testid={`button-export-word-${sheet.id}`}
+          >
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            {isExporting ? "..." : "Word"}
           </Button>
         </div>
       </div>
