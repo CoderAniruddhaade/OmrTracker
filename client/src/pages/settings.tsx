@@ -21,7 +21,7 @@ export default function Settings() {
     mutationFn: async () => {
       const auth = localStorage.getItem("omr_auth");
       const parsed = auth ? JSON.parse(auth) : {};
-      const userId = parsed.userId;
+      const userId = parsed.id;
       
       const res = await fetch("/api/auth/profile", {
         method: "PATCH",
@@ -49,7 +49,7 @@ export default function Settings() {
       }
       const auth = localStorage.getItem("omr_auth");
       const parsed = auth ? JSON.parse(auth) : {};
-      const userId = parsed.userId;
+      const userId = parsed.id;
       
       const res = await fetch("/api/auth/password", {
         method: "PATCH",
