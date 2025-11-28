@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Shield, Download, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -49,6 +50,8 @@ export default function Moderator() {
   const [newPhysics, setNewPhysics] = useState("");
   const [newChemistry, setNewChemistry] = useState("");
   const [newBiology, setNewBiology] = useState("");
+  const [importText, setImportText] = useState("");
+  const [importSubject, setImportSubject] = useState<"physics" | "chemistry" | "biology">("physics");
 
   const { data: chapters } = useQuery<ChaptersConfig>({
     queryKey: ["/api/chapters"],
@@ -205,6 +208,45 @@ export default function Moderator() {
     document.body.removeChild(link);
   };
 
+  const handleBulkImport = () => {
+    if (!importText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please paste chapter names",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const chapters = importText
+      .split(/[,\n]/)
+      .map((ch) => ch.trim())
+      .filter((ch) => ch.length > 0);
+
+    if (chapters.length === 0) {
+      toast({
+        title: "Error",
+        description: "No valid chapters found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (importSubject === "physics") {
+      setPhysics([...physics, ...chapters]);
+    } else if (importSubject === "chemistry") {
+      setChemistry([...chemistry, ...chapters]);
+    } else {
+      setBiology([...biology, ...chapters]);
+    }
+
+    setImportText("");
+    toast({
+      title: "Success",
+      description: `Added ${chapters.length} chapters to ${importSubject}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -226,6 +268,50 @@ export default function Moderator() {
           </TabsList>
 
           <TabsContent value="chapters">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Bulk Import from Google Doc
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Paste chapters (one per line or comma-separated)</label>
+                  <Textarea
+                    placeholder="Paste chapter names here&#10;Example:&#10;Chapter 1&#10;Chapter 2&#10;Chapter 3"
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    data-testid="textarea-import-chapters"
+                    className="min-h-24"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Subject</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {(["physics", "chemistry", "biology"] as const).map((subj) => (
+                      <Button
+                        key={subj}
+                        variant={importSubject === subj ? "default" : "outline"}
+                        onClick={() => setImportSubject(subj)}
+                        data-testid={`button-import-subject-${subj}`}
+                        className="capitalize"
+                      >
+                        {subj}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <Button
+                  onClick={handleBulkImport}
+                  className="w-full"
+                  data-testid="button-bulk-import"
+                >
+                  Import Chapters
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
