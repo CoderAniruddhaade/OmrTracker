@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -238,30 +238,42 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
 
   const { toast } = useToast();
 
+  // Fetch current user's sheet
+  const { data: currentSheet, isLoading } = useQuery({
+    queryKey: ["/api/omr-sheets/current"],
+  });
+
+  // Load existing sheet data when it's fetched
+  useEffect(() => {
+    if (currentSheet) {
+      setFormData({
+        name: currentSheet.name,
+        physics: currentSheet.physics || createEmptySubjectData(CHAPTERS_CONFIG.physics),
+        chemistry: currentSheet.chemistry || createEmptySubjectData(CHAPTERS_CONFIG.chemistry),
+        biology: currentSheet.biology || createEmptySubjectData(CHAPTERS_CONFIG.biology),
+      });
+    }
+  }, [currentSheet]);
+
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const response = await apiRequest("POST", "/api/omr-sheets", data);
       return response;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/omr-sheets/current"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-sheets"] });
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
-      setFormData({
-        name: "",
-        physics: createEmptySubjectData(CHAPTERS_CONFIG.physics),
-        chemistry: createEmptySubjectData(CHAPTERS_CONFIG.chemistry),
-        biology: createEmptySubjectData(CHAPTERS_CONFIG.biology),
-      });
       toast({
         title: "Success",
-        description: "OMR sheet submitted successfully!",
+        description: "OMR sheet updated successfully!",
       });
       onSubmitSuccess?.();
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to submit OMR sheet",
+        description: error.message || "Failed to update OMR sheet",
         variant: "destructive",
       });
     },
@@ -289,7 +301,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>Create OMR Sheet</CardTitle>
+          <CardTitle>Update OMR Sheet</CardTitle>
           <Button 
             type="button"
             variant="outline"

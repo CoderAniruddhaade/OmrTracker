@@ -38,6 +38,8 @@ export interface IStorage {
   
   // OMR Sheet operations
   createOmrSheet(sheet: InsertOmrSheet): Promise<OmrSheet>;
+  updateOmrSheet(userId: string, sheet: InsertOmrSheet): Promise<OmrSheet>;
+  getCurrentUserSheet(userId: string): Promise<OmrSheet | null>;
   getOmrSheetsByUser(userId: string): Promise<OmrSheet[]>;
   getAllOmrSheets(): Promise<OmrSheetWithUser[]>;
   getUserWithSheets(userId: string): Promise<{ user: User; sheets: OmrSheetWithUser[] } | null>;
@@ -138,6 +140,40 @@ export class DatabaseStorage implements IStorage {
       .values(sheet)
       .returning();
     return omrSheet;
+  }
+
+  async updateOmrSheet(userId: string, sheet: InsertOmrSheet): Promise<OmrSheet> {
+    // Get user's current sheet
+    const [existing] = await db
+      .select()
+      .from(omrSheets)
+      .where(eq(omrSheets.userId, userId));
+
+    if (!existing) {
+      // If no sheet exists, create one
+      return this.createOmrSheet(sheet);
+    }
+
+    // Update existing sheet
+    const [updated] = await db
+      .update(omrSheets)
+      .set({
+        name: sheet.name,
+        physics: sheet.physics,
+        chemistry: sheet.chemistry,
+        biology: sheet.biology,
+      })
+      .where(eq(omrSheets.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  async getCurrentUserSheet(userId: string): Promise<OmrSheet | null> {
+    const [sheet] = await db
+      .select()
+      .from(omrSheets)
+      .where(eq(omrSheets.userId, userId));
+    return sheet || null;
   }
 
   async getOmrSheetsByUser(userId: string): Promise<OmrSheet[]> {

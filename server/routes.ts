@@ -104,14 +104,27 @@ export async function registerRoutes(
   });
 
   // OMR Sheet routes
+  // GET current user's sheet
+  app.get("/api/omr-sheets/current", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const sheet = await storage.getCurrentUserSheet(userId);
+      res.json(sheet);
+    } catch (error) {
+      console.error("Error fetching current sheet:", error);
+      res.status(500).json({ message: "Failed to fetch current sheet" });
+    }
+  });
+
+  // POST or UPDATE sheet (creates if doesn't exist, updates if exists)
   app.post("/api/omr-sheets", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.userId || req.user?.claims?.sub;
       
-      // Validate request body with 8-question enforcement
+      // Validate request body
       const validatedData = omrSheetBodySchema.parse(req.body);
       
-      const omrSheet = await storage.createOmrSheet({
+      const omrSheet = await storage.updateOmrSheet(userId, {
         name: validatedData.name,
         physics: validatedData.physics,
         chemistry: validatedData.chemistry,
@@ -119,18 +132,18 @@ export async function registerRoutes(
         userId,
       });
       
-      res.status(201).json(omrSheet);
+      res.status(200).json(omrSheet);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid data", errors: error.errors });
       } else {
-        console.error("Error creating OMR sheet:", error);
-        res.status(500).json({ message: "Failed to create OMR sheet" });
+        console.error("Error updating OMR sheet:", error);
+        res.status(500).json({ message: "Failed to update OMR sheet" });
       }
     }
   });
 
-  // Get current user's sheets
+  // Get current user's sheets (kept for activity tracking)
   app.get("/api/my-sheets", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.userId || req.user?.claims?.sub;
