@@ -82,9 +82,6 @@ export default function Landing() {
                 Sign In
               </Button>
             </form>
-            <p className="text-xs text-muted-foreground mt-4 text-center">
-              Password: <strong>Sanskruti</strong>
-            </p>
           </CardContent>
         </Card>
         <p className="text-xs text-muted-foreground">Test with any username</p>
