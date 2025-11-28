@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const PASSWORD = "NEETKeLavde";
 const ALLOWED_NAMES = ["Aniruddha"];
@@ -93,9 +94,12 @@ export default function Landing() {
             </div>
             <span className="font-semibold text-lg">OMR Tracker</span>
           </div>
-          <Button asChild data-testid="button-login">
-            <a href="/api/login">Sign In</a>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild data-testid="button-login">
+              <a href="/api/login">Sign In</a>
+            </Button>
+          </div>
         </div>
       </header>
 

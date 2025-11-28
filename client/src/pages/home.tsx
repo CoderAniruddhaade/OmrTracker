@@ -7,6 +7,7 @@ import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText } from "luci
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { exportComparativeReportPDF, exportComparativeReportWord } from "@/lib/pdfExport";
@@ -63,12 +64,15 @@ export default function Home() {
             </div>
             <span className="font-semibold text-lg hidden sm:block">OMR Tracker</span>
           </div>
-          <Button variant="outline" asChild data-testid="button-logout">
-            <a href="/api/logout">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </a>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" asChild data-testid="button-logout">
+              <a href="/api/logout">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </a>
+            </Button>
+          </div>
         </div>
       </header>
 
