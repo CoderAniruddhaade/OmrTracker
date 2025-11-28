@@ -5,12 +5,19 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 
 // Validation schema for OMR sheet submission
+const questionStatusSchema = z.object({
+  done: z.boolean(),
+  practiced: z.boolean(),
+});
+
 const chapterDataSchema = z.object({
   practiced: z.number().min(0, "Practiced count cannot be negative"),
 });
 
 const subjectDataSchema = z.object({
+  present: z.number().min(0, "Present count cannot be negative"),
   chapters: z.record(z.string(), chapterDataSchema),
+  questions: z.array(questionStatusSchema),
 });
 
 const omrSheetBodySchema = z.object({

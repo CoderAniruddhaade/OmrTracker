@@ -1,8 +1,64 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ClipboardCheck, Users, TrendingUp, Atom, FlaskConical, Leaf } from "lucide-react";
 
+const PASSWORD = "NEETKeLavde";
+
 export default function Landing() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === PASSWORD) {
+      setIsAuthenticated(true);
+      setError("");
+      setPassword("");
+    } else {
+      setError("Incorrect password");
+      setPassword("");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="w-full max-w-sm">
+          <CardContent className="pt-6">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-md bg-primary flex items-center justify-center mx-auto mb-3">
+                <ClipboardCheck className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <h1 className="text-2xl font-bold">OMR Tracker</h1>
+              <p className="text-sm text-muted-foreground mt-2">Enter password to access</p>
+            </div>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  data-testid="input-password"
+                  autoFocus
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-red-500">{error}</p>
+              )}
+              <Button type="submit" className="w-full" data-testid="button-unlock">
+                Unlock
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
