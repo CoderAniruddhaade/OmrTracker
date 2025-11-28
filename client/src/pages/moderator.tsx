@@ -42,8 +42,8 @@ export default function Moderator() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [password, setPassword] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authType, setAuthType] = useState<"chapters" | "admin" | null>(null);
   const [showPasswords, setShowPasswords] = useState(false);
   const [physics, setPhysics] = useState<string[]>([]);
   const [chemistry, setChemistry] = useState<string[]>([]);
@@ -120,11 +120,19 @@ export default function Moderator() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "Sanskruti" && adminPassword === "Admin123") {
+    if (password === "modneet") {
       setIsAuthenticated(true);
+      setAuthType("chapters");
       toast({
         title: "Success",
-        description: "Moderator authenticated!",
+        description: "Chapters access granted!",
+      });
+    } else if (password === "AniSanu") {
+      setIsAuthenticated(true);
+      setAuthType("admin");
+      toast({
+        title: "Success",
+        description: "Admin access granted!",
       });
     } else {
       toast({
@@ -156,24 +164,14 @@ export default function Moderator() {
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Chapters Password</label>
+                  <label className="text-sm font-medium mb-2 block">Enter Password</label>
                   <Input
                     type="password"
-                    placeholder="Enter chapters password"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     data-testid="input-mod-password"
                     autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Admin Password</label>
-                  <Input
-                    type="password"
-                    placeholder="Enter admin password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    data-testid="input-admin-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" data-testid="button-mod-login">
@@ -305,11 +303,38 @@ export default function Moderator() {
           Back
         </Button>
 
-        <Tabs defaultValue="chapters" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
-            <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Moderator Panel</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : "Admin"}</Badge>
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsAuthenticated(false);
+              setAuthType(null);
+              setPassword("");
+            }}
+            data-testid="button-logout"
+          >
+            Logout
+          </Button>
+        </div>
+
+        <Tabs defaultValue={authType === "chapters" ? "chapters" : "users"} className="space-y-4">
+          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-2"}`}>
+            {authType === "chapters" && (
+              <TabsTrigger value="chapters">Chapters</TabsTrigger>
+            )}
+            {authType === "admin" && (
+              <>
+                <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
+                <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="chapters">
