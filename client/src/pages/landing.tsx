@@ -32,7 +32,7 @@ export default function Landing() {
       setPassword("");
       setFirstName("");
     } else {
-      setError("Incorrect password");
+      setError("Fuckoff invalid password");
       setPassword("");
       setFirstName("");
     }
