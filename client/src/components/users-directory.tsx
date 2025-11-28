@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Users, Zap } from "lucide-react";
+import { Users, Zap, Circle } from "lucide-react";
 import type { User } from "@shared/schema";
 
 interface UserWithStats extends User {
@@ -10,13 +10,24 @@ interface UserWithStats extends User {
   isOnline: boolean;
 }
 
+interface OnlineUser {
+  userId: string;
+  isOnline: boolean;
+  lastSeen: string;
+}
+
 export default function UsersDirectory() {
   const [, setLocation] = useLocation();
-  const { data: allUsers = [], isLoading } = useQuery<UserWithStats[]>({
+  const { data: allUsers = [], isLoading: usersLoading } = useQuery<UserWithStats[]>({
     queryKey: ["/api/users"],
   });
 
-  if (isLoading) {
+  const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
+    queryKey: ["/api/online-users"],
+    refetchInterval: 2000,
+  });
+
+  if (usersLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => (
@@ -26,7 +37,16 @@ export default function UsersDirectory() {
     );
   }
 
-  const onlineUsers = allUsers.filter(u => u.isOnline);
+  // Create a map of online user IDs for quick lookup
+  const onlineUserMap = new Map(onlineUsersData.map(u => [u.userId, u.isOnline]));
+  
+  // Update users with real-time online status
+  const usersWithLiveStatus = allUsers.map(user => ({
+    ...user,
+    isOnline: onlineUserMap.get(user.id) ?? false,
+  }));
+
+  const onlineUsers = usersWithLiveStatus.filter(u => u.isOnline);
 
   return (
     <div className="space-y-6">
@@ -41,10 +61,10 @@ export default function UsersDirectory() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {allUsers.map((user) => (
+        {usersWithLiveStatus.map((user) => (
           <Card
             key={user.id}
-            className="hover-elevate cursor-pointer transition-all"
+            className="hover-elevate cursor-pointer transition-all relative"
             onClick={() => setLocation(`/user/${user.id}`)}
             data-testid={`card-user-${user.id}`}
           >
@@ -58,12 +78,19 @@ export default function UsersDirectory() {
                     <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
                   )}
                 </div>
-                {user.isOnline && (
-                  <Badge variant="default" className="flex-shrink-0 gap-1 bg-green-600 hover:bg-green-700" data-testid={`badge-online-${user.id}`}>
-                    <Zap className="w-3 h-3" />
-                    <span className="hidden sm:inline">Online</span>
-                  </Badge>
-                )}
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  {user.isOnline ? (
+                    <Badge variant="default" className="gap-1 bg-green-600 hover:bg-green-700" data-testid={`badge-online-${user.id}`}>
+                      <Circle className="w-2 h-2 fill-current" />
+                      <span className="hidden sm:inline text-xs">Online</span>
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1" data-testid={`badge-offline-${user.id}`}>
+                      <Circle className="w-2 h-2 fill-current opacity-50" />
+                      <span className="hidden sm:inline text-xs">Offline</span>
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2 text-xs">
