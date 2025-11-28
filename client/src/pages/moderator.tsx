@@ -42,6 +42,7 @@ export default function Moderator() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
   const [physics, setPhysics] = useState<string[]>([]);
@@ -119,7 +120,7 @@ export default function Moderator() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "Sanskruti") {
+    if (password === "Sanskruti" && adminPassword === "Admin123") {
       setIsAuthenticated(true);
       toast({
         title: "Success",
@@ -155,13 +156,24 @@ export default function Moderator() {
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
+                  <label className="text-sm font-medium mb-2 block">Chapters Password</label>
                   <Input
                     type="password"
-                    placeholder="Enter moderator password"
+                    placeholder="Enter chapters password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     data-testid="input-mod-password"
                     autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Admin Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Enter admin password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    data-testid="input-admin-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" data-testid="button-mod-login">
