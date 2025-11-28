@@ -47,6 +47,15 @@ export interface SubjectData {
   chapters: Record<string, ChapterData>;
 }
 
+// Chapters configuration table - stores current week's chapters
+export const chaptersConfig = pgTable("chapters_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  physics: jsonb("physics").$type<string[]>().notNull(),
+  chemistry: jsonb("chemistry").$type<string[]>().notNull(),
+  biology: jsonb("biology").$type<string[]>().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // OMR Sheet table
 export const omrSheets = pgTable("omr_sheets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -81,6 +90,15 @@ export const insertOmrSheetSchema = createInsertSchema(omrSheets).omit({
 
 export type InsertOmrSheet = z.infer<typeof insertOmrSheetSchema>;
 export type OmrSheet = typeof omrSheets.$inferSelect;
+
+// Chapters config types
+export const insertChaptersConfigSchema = createInsertSchema(chaptersConfig).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertChaptersConfig = z.infer<typeof insertChaptersConfigSchema>;
+export type ChaptersConfig = typeof chaptersConfig.$inferSelect;
 
 // Extended type for OMR sheet with user info
 export interface OmrSheetWithUser extends OmrSheet {

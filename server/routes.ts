@@ -114,5 +114,55 @@ export async function registerRoutes(
     }
   });
 
+  // Moderator routes
+  app.post("/api/moderator/login", async (req: any, res) => {
+    try {
+      const { password } = req.body;
+      if (password === "Sanskruti") {
+        res.json({ authenticated: true });
+      } else {
+        res.status(401).json({ authenticated: false, message: "Invalid password" });
+      }
+    } catch (error) {
+      console.error("Error moderator login:", error);
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+
+  // Get chapters config
+  app.get("/api/chapters", async (req: any, res) => {
+    try {
+      let config = await storage.getChaptersConfig();
+      if (!config) {
+        const defaultConfig = {
+          physics: ["Elasticity", "Capacitance", "Electrostatics", "Current electricity"],
+          chemistry: ["p block", "Coordination compounds"],
+          biology: ["Microbes", "Tissue culture", "Biotechnology:PP", "The living world", "Biotech: Applications", "Human health and diseases"],
+        };
+        config = await storage.updateChaptersConfig(defaultConfig);
+      }
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching chapters:", error);
+      res.status(500).json({ message: "Failed to fetch chapters" });
+    }
+  });
+
+  // Update chapters config (moderator only)
+  app.put("/api/moderator/chapters", async (req: any, res) => {
+    try {
+      const { password, physics, chemistry, biology } = req.body;
+      if (password !== "Sanskruti") {
+        res.status(401).json({ message: "Invalid password" });
+        return;
+      }
+      const updated = await storage.updateChaptersConfig({ physics, chemistry, biology });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating chapters:", error);
+      res.status(500).json({ message: "Failed to update chapters" });
+    }
+  });
+
   return httpServer;
 }

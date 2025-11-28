@@ -113,6 +113,9 @@ export default function Landing() {
               <Button size="lg" asChild data-testid="button-get-started">
                 <a href="/api/login">Get Started</a>
               </Button>
+              <Button size="lg" variant="outline" asChild data-testid="button-moderator">
+                <a href="/moderator">Moderator Panel</a>
+              </Button>
             </div>
           </div>
         </section>

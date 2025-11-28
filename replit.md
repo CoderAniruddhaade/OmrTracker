@@ -59,6 +59,9 @@ shared/
 - `GET /api/my-sheets` - Get current user's sheets
 - `GET /api/activity` - Get all users' activity
 - `GET /api/users/:userId` - Get user profile with sheets
+- `GET /api/chapters` - Get current week's chapters configuration
+- `POST /api/moderator/login` - Moderator authentication (password: "Sanskruti")
+- `PUT /api/moderator/chapters` - Update chapters for the week
 
 ## Database Schema
 
@@ -99,3 +102,15 @@ The app runs with `npm run dev` which starts both frontend (Vite) and backend (E
 - Added Replit Auth for user authentication
 - Created responsive dashboard with activity feed
 - Implemented user profile pages with statistics
+- **NEW**: Added Moderator Panel with weekly chapter management
+  - Moderator password: "Sanskruti"
+  - Access via /moderator route
+  - Add/remove chapters for each subject
+  - Changes apply immediately to all new sheets
+
+## Moderator Features
+
+- Weekly chapter updates for Physics (4), Chemistry (2), and Biology (6) subjects
+- Password-protected moderator panel ("Sanskruti")
+- Simple interface to add and remove chapters
+- Real-time updates to database

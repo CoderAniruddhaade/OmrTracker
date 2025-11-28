@@ -9,6 +9,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import UserProfile from "@/pages/user-profile";
 import MySheets from "@/pages/my-sheets";
+import Moderator from "@/pages/moderator";
 
 function ProtectedRoute({ component: Component, ...props }: { component: React.ComponentType<any>, [key: string]: any }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -49,6 +50,9 @@ function Router() {
       </Route>
       <Route path="/user/:userId">
         {(params) => <ProtectedRoute component={UserProfile} userId={params.userId} />}
+      </Route>
+      <Route path="/moderator">
+        <Moderator />
       </Route>
       <Route component={NotFound} />
     </Switch>

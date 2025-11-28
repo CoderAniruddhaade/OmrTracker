@@ -1,11 +1,14 @@
 import {
   users,
   omrSheets,
+  chaptersConfig,
   type User,
   type UpsertUser,
   type OmrSheet,
   type InsertOmrSheet,
   type OmrSheetWithUser,
+  type ChaptersConfig,
+  type InsertChaptersConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -20,6 +23,10 @@ export interface IStorage {
   getOmrSheetsByUser(userId: string): Promise<OmrSheet[]>;
   getAllOmrSheets(): Promise<OmrSheetWithUser[]>;
   getUserWithSheets(userId: string): Promise<{ user: User; sheets: OmrSheetWithUser[] } | null>;
+  
+  // Chapters config operations
+  getChaptersConfig(): Promise<ChaptersConfig | null>;
+  updateChaptersConfig(chapters: InsertChaptersConfig): Promise<ChaptersConfig>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -113,6 +120,36 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return { user, sheets };
+  }
+
+  // Chapters config operations
+  async getChaptersConfig(): Promise<ChaptersConfig | null> {
+    const [config] = await db.select().from(chaptersConfig).limit(1);
+    return config || null;
+  }
+
+  async updateChaptersConfig(data: InsertChaptersConfig): Promise<ChaptersConfig> {
+    const existing = await this.getChaptersConfig();
+    
+    if (existing) {
+      const [updated] = await db
+        .update(chaptersConfig)
+        .set({
+          physics: data.physics as unknown as string[],
+          chemistry: data.chemistry as unknown as string[],
+          biology: data.biology as unknown as string[],
+          updatedAt: new Date(),
+        })
+        .where(eq(chaptersConfig.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(chaptersConfig)
+        .values([{ physics: data.physics as unknown as string[], chemistry: data.chemistry as unknown as string[], biology: data.biology as unknown as string[] }])
+        .returning();
+      return created;
+    }
   }
 }
 
