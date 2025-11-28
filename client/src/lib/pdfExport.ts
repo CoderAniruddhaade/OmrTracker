@@ -1,13 +1,11 @@
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, BorderStyle, VerticalAlign, HeadingLevel, UnderlineType } from "docx";
+import { Document, Packer, Paragraph, Table, TableCell, TableRow } from "docx";
 import { saveAs } from "file-saver";
 import type { OmrSheet, OmrSheetWithUser } from "@shared/schema";
 
 export async function exportIndividualReportPDF(sheet: OmrSheet, userName: string) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   let yPosition = margin;
 
@@ -27,9 +25,9 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
   doc.setTextColor(0);
 
   const subjects = [
-    { title: "Physics", data: sheet.physics, color: [215, 75, 50] },
-    { title: "Chemistry", data: sheet.chemistry, color: [150, 60, 40] },
-    { title: "Biology", data: sheet.biology, color: [30, 70, 48] },
+    { title: "Physics", data: sheet.physics },
+    { title: "Chemistry", data: sheet.chemistry },
+    { title: "Biology", data: sheet.biology },
   ];
 
   for (const subject of subjects) {
@@ -39,7 +37,7 @@ export async function exportIndividualReportPDF(sheet: OmrSheet, userName: strin
     }
 
     doc.setFontSize(14);
-    doc.setTextColor(subject.color[0], subject.color[1], subject.color[2]);
+    doc.setTextColor(0);
     doc.text(`${subject.title}`, margin, yPosition);
     yPosition += 10;
 
@@ -234,7 +232,6 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
 export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
   let yPosition = margin;
 
@@ -247,14 +244,35 @@ export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, yPosition);
   doc.text(`Total Users: ${sheets.length}`, margin + 80, yPosition);
   
-  yPosition += 15;
+  yPosition += 20;
   doc.setTextColor(0);
 
-  const tableData: string[][] = [];
+  // Simple table with basic drawing
+  const colWidths = [40, 20, 20, 20, 20, 20];
+  const colX = [margin, margin + 40, margin + 60, margin + 80, margin + 100, margin + 120];
   
-  tableData.push(["User", "Physics", "Chemistry", "Biology", "Total Done", "Completion %"]);
+  // Draw header
+  doc.setFontSize(10);
+  doc.setTextColor(255);
+  doc.setFillColor(30, 70, 48);
+  doc.rect(margin, yPosition - 5, 150, 7, 'F');
+  
+  const headers = ["User", "Physics", "Chemistry", "Biology", "Total", "Done %"];
+  headers.forEach((header, i) => {
+    doc.text(header, colX[i], yPosition);
+  });
+  
+  yPosition += 10;
+  doc.setTextColor(0);
+  doc.setFontSize(9);
 
+  // Draw rows
   for (const sheet of sheets) {
+    if (yPosition > pageHeight - 20) {
+      doc.addPage();
+      yPosition = margin;
+    }
+
     const physicsDone = Object.values(sheet.physics.chapters || {}).filter(ch => ch.done).length;
     const chemistryDone = Object.values(sheet.chemistry.chapters || {}).filter(ch => ch.done).length;
     const biologyDone = Object.values(sheet.biology.chapters || {}).filter(ch => ch.done).length;
@@ -271,38 +289,21 @@ export async function exportComparativeReportPDF(sheets: OmrSheetWithUser[]) {
       ? `${sheet.user.firstName} ${sheet.user.lastName}`
       : sheet.user?.firstName || sheet.user?.email || "Unknown";
 
-    tableData.push([
+    const rowData = [
       userName,
       `${physicsDone}/${physicsCount}`,
       `${chemistryDone}/${chemistryCount}`,
       `${biologyDone}/${biologyCount}`,
       totalDone.toString(),
       `${completion}%`,
-    ]);
-  }
+    ];
 
-  (doc as any).autoTable({
-    head: [tableData[0]],
-    body: tableData.slice(1),
-    startY: yPosition,
-    margin: margin,
-    headerStyles: {
-      fillColor: [30, 70, 48],
-      textColor: 255,
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [240, 240, 240],
-    },
-    columnStyles: {
-      0: { cellWidth: 40 },
-      1: { cellWidth: 20 },
-      2: { cellWidth: 20 },
-      3: { cellWidth: 20 },
-      4: { cellWidth: 20 },
-      5: { cellWidth: 20 },
-    },
-  });
+    rowData.forEach((cell, i) => {
+      doc.text(cell, colX[i], yPosition);
+    });
+
+    yPosition += 8;
+  }
 
   doc.save(`comparative-report-${new Date().toISOString().split('T')[0]}.pdf`);
 }
