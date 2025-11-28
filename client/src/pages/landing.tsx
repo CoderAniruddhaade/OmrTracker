@@ -45,21 +45,21 @@ export default function Landing() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
-        <Card className="w-full max-w-sm">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-8">
+        <Card className="w-full max-w-sm mb-6">
           <CardContent className="pt-6">
             <div className="text-center mb-6">
               <div className="w-12 h-12 rounded-md bg-primary flex items-center justify-center mx-auto mb-3">
                 <ClipboardCheck className="w-6 h-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold">OMR Tracker</h1>
-              <p className="text-sm text-muted-foreground mt-2">Enter password to access</p>
+              <p className="text-sm text-muted-foreground mt-2">Enter your details to access</p>
             </div>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
                 <Input
                   type="text"
-                  placeholder="First name"
+                  placeholder="Enter your name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   data-testid="input-firstname"
@@ -79,11 +79,15 @@ export default function Landing() {
                 <p className="text-sm text-red-500">{error}</p>
               )}
               <Button type="submit" className="w-full" data-testid="button-unlock">
-                Unlock
+                Sign In
               </Button>
             </form>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              Password: <strong>Sanskruti</strong>
+            </p>
           </CardContent>
         </Card>
+        <p className="text-xs text-muted-foreground">Test with any username</p>
       </div>
     );
   }

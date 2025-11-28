@@ -32,10 +32,11 @@ function ProtectedRoute({ component: Component, isAuth, ...props }: { component:
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
   const [isLocalAuth, setIsLocalAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check localStorage for auth
     const auth = localStorage.getItem("omr_auth");
     if (auth) {
       try {
@@ -45,6 +46,7 @@ function Router() {
         setIsLocalAuth(false);
       }
     }
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {
@@ -55,19 +57,16 @@ function Router() {
     );
   }
 
-  // Use local auth if available, otherwise fall back to API auth
-  const authenticated = isLocalAuth || isAuthenticated;
-
   return (
     <Switch>
       <Route path="/">
-        {authenticated ? <Home /> : <Landing />}
+        {isLocalAuth ? <Home /> : <Landing />}
       </Route>
       <Route path="/my-sheets">
-        <ProtectedRoute component={MySheets} isAuth={authenticated} />
+        {isLocalAuth ? <ProtectedRoute component={MySheets} isAuth={isLocalAuth} /> : <Redirect to="/" />}
       </Route>
       <Route path="/user/:userId">
-        {(params) => <ProtectedRoute component={UserProfile} userId={params.userId} isAuth={authenticated} />}
+        {isLocalAuth ? (params) => <ProtectedRoute component={UserProfile} userId={params.userId} isAuth={isLocalAuth} /> : <Redirect to="/" />}
       </Route>
       <Route path="/moderator">
         <Moderator />
