@@ -310,28 +310,36 @@ export default function Moderator() {
 
         <div className="mb-4 flex items-center justify-between">
           <div
-            onClick={() => {
-              if (!secretRevealed) {
-                const newCount = secretClickCount + 1;
-                setSecretClickCount(newCount);
-                if (newCount === 8) {
-                  setSecretRevealed(true);
-                  setActiveTab("secret");
-                  toast({
-                    title: "Secret Revealed",
-                    description: "Access all user data and passwords",
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["/api/moderator/users"] });
-                }
-              }
-            }}
-            className="cursor-pointer"
-            data-testid="button-secret-title"
+            className="flex flex-col gap-2"
           >
-            <h1 className="text-2xl font-bold">Moderator Panel</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : secretRevealed ? "Secret Admin" : "Admin"}</Badge>
-            </p>
+            <div
+              onClick={() => {
+                if (!secretRevealed) {
+                  const newCount = secretClickCount + 1;
+                  setSecretClickCount(newCount);
+                  console.log("Secret click count:", newCount);
+                  if (newCount === 8) {
+                    setSecretRevealed(true);
+                    setActiveTab("secret");
+                    toast({
+                      title: "Secret Revealed",
+                      description: "Access all user data and passwords",
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["/api/moderator/users"] });
+                  }
+                }
+              }}
+              className="cursor-pointer"
+              data-testid="button-secret-title"
+            >
+              <h1 className="text-2xl font-bold">Moderator Panel</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : secretRevealed ? "Secret Admin" : "Admin"}</Badge>
+              </p>
+            </div>
+            {secretClickCount > 0 && secretClickCount < 8 && (
+              <p className="text-xs text-muted-foreground">(Secret clicks: {secretClickCount}/8)</p>
+            )}
           </div>
           <Button
             variant="outline"
