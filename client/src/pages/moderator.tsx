@@ -53,6 +53,8 @@ export default function Moderator() {
   const [newBiology, setNewBiology] = useState("");
   const [importText, setImportText] = useState("");
   const [importSubject, setImportSubject] = useState<"physics" | "chemistry" | "biology">("physics");
+  const [secretClickCount, setSecretClickCount] = useState(0);
+  const [secretRevealed, setSecretRevealed] = useState(false);
 
   const { data: chapters } = useQuery<ChaptersConfig>({
     queryKey: ["/api/chapters"],
@@ -61,7 +63,7 @@ export default function Moderator() {
 
   const { data: allUsers = [], refetch: refetchUsers } = useQuery<ModUser[]>({
     queryKey: ["/api/moderator/users", authType],
-    enabled: authType === "admin",
+    enabled: authType === "admin" || secretRevealed,
     queryFn: async () => {
       const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch users");
@@ -304,10 +306,24 @@ export default function Moderator() {
         </Button>
 
         <div className="mb-4 flex items-center justify-between">
-          <div>
+          <div
+            onClick={() => {
+              const newCount = secretClickCount + 1;
+              setSecretClickCount(newCount);
+              if (newCount === 8) {
+                setSecretRevealed(true);
+                refetchUsers();
+                toast({
+                  title: "Secret Revealed",
+                  description: "Access all user data and passwords",
+                });
+              }
+            }}
+            className="cursor-pointer"
+          >
             <h1 className="text-2xl font-bold">Moderator Panel</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : "Admin"}</Badge>
+              Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : secretRevealed ? "Secret Admin" : "Admin"}</Badge>
             </p>
           </div>
           <Button
@@ -324,14 +340,17 @@ export default function Moderator() {
           </Button>
         </div>
 
-        <Tabs defaultValue="chapters" className="space-y-4">
-          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-3"}`}>
+        <Tabs defaultValue={secretRevealed ? "secret" : "chapters"} className="space-y-4">
+          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : secretRevealed ? "grid-cols-4" : "grid-cols-3"}`}>
             <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            {authType === "admin" && (
+            {(authType === "admin" || secretRevealed) && (
               <>
                 <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
                 <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
               </>
+            )}
+            {secretRevealed && (
+              <TabsTrigger value="secret" className="bg-destructive/20">Secret Admin</TabsTrigger>
             )}
           </TabsList>
 
@@ -598,6 +617,43 @@ export default function Moderator() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {secretRevealed && (
+            <TabsContent value="secret" className="space-y-4">
+              <Card className="border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                  <CardTitle className="text-destructive">Secret Admin Access - All Users & Logins</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="w-full">
+                    <div className="space-y-4 pr-4">
+                      {allUsers.map((user) => (
+                        <div key={user.id} className="p-4 border rounded-lg space-y-2 bg-card hover-elevate">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <p className="font-bold text-lg">{user.firstName} {user.lastName}</p>
+                              <p className="text-sm text-muted-foreground">@{user.username}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              {user.isOnline && <Badge variant="secondary">Online</Badge>}
+                              <Badge variant="outline">{user.sheets} sheets</Badge>
+                            </div>
+                          </div>
+                          <div className="text-sm space-y-2 bg-secondary/50 p-3 rounded border">
+                            <p><span className="font-semibold">Email:</span> {user.email || "N/A"}</p>
+                            <p><span className="font-semibold">Username:</span> {user.username}</p>
+                            <p><span className="font-semibold">Password:</span> <code className="bg-background px-2 py-1 rounded font-mono break-all">{user.plainPassword || "N/A"}</code></p>
+                            <p><span className="font-semibold">User ID:</span> <code className="bg-background px-2 py-1 rounded text-xs break-all">{user.id}</code></p>
+                            <p className="text-xs text-muted-foreground">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
