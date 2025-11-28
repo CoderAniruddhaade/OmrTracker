@@ -51,10 +51,12 @@ export default function ChatMenu({ onSelectConversation, selectedConvId }: ChatM
   });
 
   // Fetch online users
-  const { data: onlineUsers = [] } = useQuery<any[]>({
+  const { data: onlineUsersData = [] } = useQuery<any[]>({
     queryKey: ["/api/online-users"],
     refetchInterval: 3000,
   });
+  
+  const onlineUserIds = new Set(onlineUsersData.map((u: any) => u.userId || u.id));
 
   // Create group
   const createGroupMutation = useMutation({
@@ -84,7 +86,6 @@ export default function ChatMenu({ onSelectConversation, selectedConvId }: ChatM
 
   // Filter out current user from available users
   const availableUsers = allUsers.filter((u: any) => u.id !== user?.id);
-  const onlineUserIds = new Set(onlineUsers.map((u: any) => u.id));
 
   // Get existing 1-on-1 conversation users
   const existingUserIds = new Set(
