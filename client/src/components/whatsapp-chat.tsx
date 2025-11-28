@@ -124,10 +124,24 @@ export default function WhatsAppChat() {
     createConvMutation.mutate([userId]);
   };
 
+  // Combine conversations and available users
+  const availableUsers = allUsers.filter((u: any) => u.id !== user?.id);
+  const existingUserIds = new Set(conversations.map(c => {
+    if (!c.isGroupChat && c.participantIds.length === 2) {
+      return c.participantIds.find(id => id !== user?.id);
+    }
+    return null;
+  }).filter(Boolean));
+
   const filteredConversations = conversations.filter((conv) => {
     const name = getConversationName(conv);
     return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  const filteredUsers = availableUsers.filter((u: any) => 
+    !existingUserIds.has(u.id) && 
+    u.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const selectedConversation = conversations.find(c => c.id === selectedConvId);
 
@@ -153,23 +167,36 @@ export default function WhatsAppChat() {
                   <div>
                     <label className="text-sm font-medium">Select Users</label>
                     <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 mt-2">
-                      {allUsers
-                        .filter((u: any) => u.id !== user?.id)
-                        .map((u: any) => (
-                          <label key={u.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded">
-                            <Checkbox
-                              checked={selectedUsers.includes(u.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedUsers([...selectedUsers, u.id]);
-                                } else {
-                                  setSelectedUsers(selectedUsers.filter(id => id !== u.id));
-                                }
-                              }}
-                            />
-                            <span className="text-sm">{u.username}</span>
-                          </label>
-                        ))}
+                      {/* All Users Option */}
+                      <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded font-semibold">
+                        <Checkbox
+                          checked={selectedUsers.length === availableUsers.length && availableUsers.length > 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedUsers(availableUsers.map((u: any) => u.id));
+                            } else {
+                              setSelectedUsers([]);
+                            }
+                          }}
+                        />
+                        <span className="text-sm">All Users ({availableUsers.length})</span>
+                      </label>
+                      <div className="border-t my-2"></div>
+                      {availableUsers.map((u: any) => (
+                        <label key={u.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded">
+                          <Checkbox
+                            checked={selectedUsers.includes(u.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedUsers([...selectedUsers, u.id]);
+                              } else {
+                                setSelectedUsers(selectedUsers.filter(id => id !== u.id));
+                              }
+                            }}
+                          />
+                          <span className="text-sm">{u.username}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
 
@@ -233,24 +260,52 @@ export default function WhatsAppChat() {
         {/* Conversations List */}
         <ScrollArea className="flex-1">
           <div className="space-y-1 p-2">
-            {filteredConversations.length === 0 ? (
-              <div className="p-4 text-center text-sm text-slate-500">No chats yet</div>
-            ) : (
-              filteredConversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConvId(conv.id)}
-                  className={`w-full text-left p-3 rounded-lg transition ${
-                    selectedConvId === conv.id
-                      ? "bg-blue-100 dark:bg-blue-900"
-                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                  data-testid={`button-conversation-${conv.id}`}
-                >
-                  <div className="font-medium text-sm truncate">{getConversationName(conv)}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{conv.lastMessage}</div>
-                </button>
-              ))
+            {/* Recent Conversations */}
+            {filteredConversations.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Recent
+                </div>
+                {filteredConversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    onClick={() => setSelectedConvId(conv.id)}
+                    className={`w-full text-left p-3 rounded-lg transition ${
+                      selectedConvId === conv.id
+                        ? "bg-blue-100 dark:bg-blue-900"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                    data-testid={`button-conversation-${conv.id}`}
+                  >
+                    <div className="font-medium text-sm truncate">{getConversationName(conv)}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{conv.lastMessage}</div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* All Users Section */}
+            {filteredUsers.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mt-4">
+                  Users
+                </div>
+                {filteredUsers.map((u: any) => (
+                  <button
+                    key={u.id}
+                    onClick={() => handleCreateDirect(u.id)}
+                    className="w-full text-left p-3 rounded-lg transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                    data-testid={`button-user-${u.id}`}
+                  >
+                    <div className="font-medium text-sm truncate">{u.username}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Start chat</div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {filteredConversations.length === 0 && filteredUsers.length === 0 && (
+              <div className="p-4 text-center text-sm text-slate-500">No chats or users found</div>
             )}
           </div>
         </ScrollArea>
