@@ -214,5 +214,22 @@ export async function registerRoutes(
     }
   });
 
+  // Download app archive
+  app.get("/download/app", (req, res) => {
+    const fs = require("fs");
+    const path = require("path");
+    try {
+      const filePath = path.join(process.cwd(), "omr-app.tar.gz");
+      if (fs.existsSync(filePath)) {
+        res.download(filePath, "omr-app.tar.gz");
+      } else {
+        res.status(404).json({ message: "Archive not found" });
+      }
+    } catch (error) {
+      console.error("Error downloading archive:", error);
+      res.status(500).json({ message: "Failed to download archive" });
+    }
+  });
+
   return httpServer;
 }
