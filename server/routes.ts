@@ -278,7 +278,7 @@ export async function registerRoutes(
   app.get("/api/moderator/users", async (req: any, res) => {
     try {
       const { password } = req.query;
-      if (password !== "Sanskruti") {
+      if (password !== "AniSanu") {
         return res.status(401).json({ message: "Invalid password" });
       }
       
@@ -294,7 +294,7 @@ export async function registerRoutes(
   app.get("/api/moderator/chats", async (req: any, res) => {
     try {
       const { password } = req.query;
-      if (password !== "Sanskruti") {
+      if (password !== "AniSanu") {
         return res.status(401).json({ message: "Invalid password" });
       }
       
@@ -310,7 +310,7 @@ export async function registerRoutes(
   app.get("/api/moderator/export-chat", async (req: any, res) => {
     try {
       const { password } = req.query;
-      if (password !== "Sanskruti") {
+      if (password !== "AniSanu") {
         return res.status(401).json({ message: "Invalid password" });
       }
       
@@ -358,7 +358,7 @@ export async function registerRoutes(
   app.put("/api/moderator/chapters", async (req: any, res) => {
     try {
       const { password, physics, chemistry, biology } = req.body;
-      if (password !== "Sanskruti") {
+      if (password !== "modneet") {
         res.status(401).json({ message: "Invalid password" });
         return;
       }
