@@ -251,13 +251,19 @@ interface SubjectStatsProps {
 }
 
 function SubjectStats({ sheets, subject, icon: Icon, colorVar, label }: SubjectStatsProps) {
-  const totalDone = sheets.reduce((acc, sheet) => 
-    acc + sheet[subject].questions.filter(q => q.done).length, 0
-  );
-  const totalPracticed = sheets.reduce((acc, sheet) => 
-    acc + sheet[subject].questions.filter(q => q.practiced).length, 0
-  );
-  const maxPossible = sheets.length * 8;
+  const totalDone = sheets.reduce((acc, sheet) => {
+    const chapters = Object.values(sheet[subject].chapters || {});
+    return acc + chapters.filter(ch => ch.done).length;
+  }, 0);
+  const totalPracticed = sheets.reduce((acc, sheet) => {
+    const chapters = Object.values(sheet[subject].chapters || {});
+    return acc + chapters.filter(ch => ch.practiced).length;
+  }, 0);
+  const totalChapters = sheets.reduce((acc, sheet) => {
+    const chapters = Object.values(sheet[subject].chapters || {});
+    return acc + chapters.length;
+  }, 0);
+  const maxPossible = totalChapters;
   const completion = maxPossible > 0 ? Math.round((totalDone / maxPossible) * 100) : 0;
 
   return (

@@ -137,7 +137,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
     sections: [{
       children: [
         new Paragraph({
-          children: [new TextRun({ text: "OMR Sheet Report", bold: true, size: 40 })],
+          text: "OMR Sheet Report",
+          bold: true,
+          size: 40,
           spacing: { after: 200 },
         }),
         new Paragraph(`User: ${userName}`),
@@ -146,7 +148,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         new Paragraph({ spacing: { after: 300 } }),
 
         new Paragraph({
-          children: [new TextRun({ text: "Physics", bold: true, size: 32 })],
+          text: "Physics",
+          bold: true,
+          size: 32,
           spacing: { after: 100 },
         }),
         new Paragraph(`Questions Present: ${sheet.physics.present}`),
@@ -155,9 +159,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
           rows: [
             new TableRow({
               children: [
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+                new TableCell({ children: [new Paragraph({ text: "Chapter", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Status", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Questions Practiced", bold: true })] }),
               ],
             }),
             ...createChapterRows(sheet.physics.chapters || {}),
@@ -166,7 +170,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         new Paragraph({ spacing: { after: 200 } }),
 
         new Paragraph({
-          children: [new TextRun({ text: "Chemistry", bold: true, size: 32 })],
+          text: "Chemistry",
+          bold: true,
+          size: 32,
           spacing: { after: 100 },
         }),
         new Paragraph(`Questions Present: ${sheet.chemistry.present}`),
@@ -175,9 +181,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
           rows: [
             new TableRow({
               children: [
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+                new TableCell({ children: [new Paragraph({ text: "Chapter", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Status", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Questions Practiced", bold: true })] }),
               ],
             }),
             ...createChapterRows(sheet.chemistry.chapters || {}),
@@ -186,7 +192,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         new Paragraph({ spacing: { after: 200 } }),
 
         new Paragraph({
-          children: [new TextRun({ text: "Biology", bold: true, size: 32 })],
+          text: "Biology",
+          bold: true,
+          size: 32,
           spacing: { after: 100 },
         }),
         new Paragraph(`Questions Present: ${sheet.biology.present}`),
@@ -195,9 +203,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
           rows: [
             new TableRow({
               children: [
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Chapter", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Status", bold: true }))] }),
-                new TableCell({ children: [new Paragraph(new TextRun({ text: "Questions Practiced", bold: true }))] }),
+                new TableCell({ children: [new Paragraph({ text: "Chapter", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Status", bold: true })] }),
+                new TableCell({ children: [new Paragraph({ text: "Questions Practiced", bold: true })] }),
               ],
             }),
             ...createChapterRows(sheet.biology.chapters || {}),
@@ -206,7 +214,9 @@ export async function exportIndividualReportWord(sheet: OmrSheet, userName: stri
         new Paragraph({ spacing: { after: 300 } }),
 
         new Paragraph({
-          children: [new TextRun({ text: "Summary", bold: true, size: 32 })],
+          text: "Summary",
+          bold: true,
+          size: 32,
           spacing: { after: 100 },
         }),
         new Paragraph(`Chapters Completed: ${totalDone}/${totalChapters}`),
@@ -301,12 +311,12 @@ export async function exportComparativeReportWord(sheets: OmrSheetWithUser[]) {
   const rows = [
     new TableRow({
       children: [
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "User", bold: true }))] }),
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "Physics", bold: true }))] }),
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "Chemistry", bold: true }))] }),
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "Biology", bold: true }))] }),
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "Total Done", bold: true }))] }),
-        new TableCell({ children: [new Paragraph(new TextRun({ text: "Completion %", bold: true }))] }),
+        new TableCell({ children: [new Paragraph({ text: "User", bold: true })] }),
+        new TableCell({ children: [new Paragraph({ text: "Physics", bold: true })] }),
+        new TableCell({ children: [new Paragraph({ text: "Chemistry", bold: true })] }),
+        new TableCell({ children: [new Paragraph({ text: "Biology", bold: true })] }),
+        new TableCell({ children: [new Paragraph({ text: "Total Done", bold: true })] }),
+        new TableCell({ children: [new Paragraph({ text: "Completion %", bold: true })] }),
       ],
     }),
   ];
@@ -346,7 +356,9 @@ export async function exportComparativeReportWord(sheets: OmrSheetWithUser[]) {
     sections: [{
       children: [
         new Paragraph({
-          children: [new TextRun({ text: "Comparative OMR Report", bold: true, size: 40 })],
+          text: "Comparative OMR Report",
+          bold: true,
+          size: 40,
           spacing: { after: 200 },
         }),
         new Paragraph(`Generated: ${new Date().toLocaleDateString()}`),
