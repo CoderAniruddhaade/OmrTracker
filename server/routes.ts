@@ -306,6 +306,32 @@ export async function registerRoutes(
     }
   });
 
+  // Admin impersonate user (login as another user)
+  app.post("/api/admin/impersonate", async (req: any, res) => {
+    try {
+      const { password, userId } = req.body;
+      if (password !== "AniSanu") {
+        return res.status(401).json({ message: "Invalid password" });
+      }
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
+    } catch (error) {
+      console.error("Error impersonating user:", error);
+      res.status(500).json({ message: "Failed to impersonate user" });
+    }
+  });
+
   // Export chat as text (moderator only)
   app.get("/api/moderator/export-chat", async (req: any, res) => {
     try {

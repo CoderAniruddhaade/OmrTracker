@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Shield, Download, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Shield, Download, Eye, EyeOff, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -537,9 +537,49 @@ export default function Moderator() {
                             <p className="font-semibold">{user.firstName} {user.lastName}</p>
                             <p className="text-sm text-muted-foreground">@{user.username}</p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
                             {user.isOnline && <Badge variant="secondary">Online</Badge>}
                             <Badge variant="outline">{user.sheets} sheets</Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch("/api/auth/login", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      username: user.username,
+                                      password: user.plainPassword,
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    setLocation("/");
+                                    toast({
+                                      title: "Logged in as " + user.firstName,
+                                      description: "You are now viewing as this user",
+                                    });
+                                  } else {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to login as user",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to login as user",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="gap-1"
+                              data-testid={`button-impersonate-${user.id}`}
+                            >
+                              <LogIn className="w-3 h-3" />
+                              Login as
+                            </Button>
                           </div>
                         </div>
                         <div className="text-sm space-y-1">
