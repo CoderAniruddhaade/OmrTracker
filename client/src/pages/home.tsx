@@ -9,7 +9,8 @@ import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
 import Bakchodi from "@/components/pro-chat";
-import WhatsAppChat from "@/components/whatsapp-chat";
+import ChatMenu from "@/components/chat-menu";
+import ChatWindow from "@/components/chat-window";
 import UsersDirectory from "@/components/users-directory";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +25,7 @@ export default function Home() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new-sheet");
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState<string>("");
 
   // Set online status
   useEffect(() => {
@@ -210,7 +212,20 @@ export default function Home() {
               </TabsContent>
 
               <TabsContent value="private-chat" className="mt-0">
-                <WhatsAppChat />
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="lg:col-span-1">
+                    <ChatMenu onSelectConversation={setSelectedChatId} selectedConvId={selectedChatId} />
+                  </div>
+                  <div className="lg:col-span-3">
+                    {selectedChatId ? (
+                      <ChatWindow conversationId={selectedChatId} />
+                    ) : (
+                      <div className="h-96 lg:h-[600px] rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Select a chat to start messaging</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="users" className="mt-0">
