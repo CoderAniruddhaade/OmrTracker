@@ -556,6 +556,7 @@ export default function Moderator() {
                                   if (res.ok) {
                                     const userData = await res.json();
                                     localStorage.setItem("user", JSON.stringify(userData));
+                                    localStorage.setItem("omr_auth", JSON.stringify({ authenticated: true }));
                                     toast({
                                       title: "Logged in as " + user.firstName,
                                       description: "Redirecting to OMR sheet...",
