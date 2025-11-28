@@ -54,8 +54,6 @@ export default function Moderator() {
   const [newBiology, setNewBiology] = useState("");
   const [importText, setImportText] = useState("");
   const [importSubject, setImportSubject] = useState<"physics" | "chemistry" | "biology">("physics");
-  const [secretClickCount, setSecretClickCount] = useState(0);
-  const [secretRevealed, setSecretRevealed] = useState(false);
   const [activeTab, setActiveTab] = useState("chapters");
 
   const { data: chapters } = useQuery<ChaptersConfig>({
@@ -309,37 +307,11 @@ export default function Moderator() {
         </Button>
 
         <div className="mb-4 flex items-center justify-between">
-          <div
-            className="flex flex-col gap-2"
-          >
-            <div
-              onClick={() => {
-                if (!secretRevealed) {
-                  const newCount = secretClickCount + 1;
-                  setSecretClickCount(newCount);
-                  console.log("Secret click count:", newCount);
-                  if (newCount === 8) {
-                    setSecretRevealed(true);
-                    setActiveTab("secret");
-                    toast({
-                      title: "Secret Revealed",
-                      description: "Access all user data and passwords",
-                    });
-                    queryClient.invalidateQueries({ queryKey: ["/api/moderator/users"] });
-                  }
-                }
-              }}
-              className="cursor-pointer"
-              data-testid="button-secret-title"
-            >
-              <h1 className="text-2xl font-bold">Moderator Panel</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : secretRevealed ? "Secret Admin" : "Admin"}</Badge>
-              </p>
-            </div>
-            {secretClickCount > 0 && secretClickCount < 8 && (
-              <p className="text-xs text-muted-foreground">(Secret clicks: {secretClickCount}/8)</p>
-            )}
+          <div>
+            <h1 className="text-2xl font-bold">Moderator Panel</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Access Level: <Badge>{authType === "chapters" ? "Chapters Manager" : "Admin"}</Badge>
+            </p>
           </div>
           <Button
             variant="outline"
@@ -356,16 +328,13 @@ export default function Moderator() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : secretRevealed ? "grid-cols-4" : "grid-cols-3"}`}>
+          <TabsList className={`grid w-full ${authType === "chapters" ? "grid-cols-1" : "grid-cols-3"}`}>
             <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            {(authType === "admin" || secretRevealed) && (
+            {authType === "admin" && (
               <>
                 <TabsTrigger value="users">Users ({allUsers.length})</TabsTrigger>
                 <TabsTrigger value="chats">Chats ({chats.length})</TabsTrigger>
               </>
-            )}
-            {secretRevealed && (
-              <TabsTrigger value="secret" className="bg-destructive/20">Secret Admin</TabsTrigger>
             )}
           </TabsList>
 
