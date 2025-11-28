@@ -120,7 +120,46 @@ export const chatMessages = pgTable("chat_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   message: varchar("message").notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  editedAt: timestamp("edited_at"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Whisper/DM messages table (private chats between 2-3 users)
+export const whisperMessages = pgTable("whisper_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  recipientIds: jsonb("recipient_ids").$type<string[]>().notNull(), // Array of 1-2 user IDs
+  message: varchar("message").notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  editedAt: timestamp("edited_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Message reactions table
+export const messageReactions = pgTable("message_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => chatMessages.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reaction: varchar("reaction").notNull(), // emoji like 👍 ❤️ 😂 etc
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Whisper reactions table
+export const whisperReactions = pgTable("whisper_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => whisperMessages.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reaction: varchar("reaction").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Typing status
+export const typingStatus = pgTable("typing_status", {
+  userId: varchar("user_id").primaryKey().references(() => users.id),
+  chatType: varchar("chat_type").notNull(), // "public" or "whisper"
+  targetIds: jsonb("target_ids").$type<string[]>().default(sql`'[]'`).notNull(), // for whispers
+  lastTyping: timestamp("last_typing").defaultNow(),
 });
 
 // User presence/online status table
@@ -152,8 +191,27 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   id: true,
   createdAt: true,
+  isDeleted: true,
+  editedAt: true,
 });
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+// Whisper message types
+export type WhisperMessage = typeof whisperMessages.$inferSelect;
+export const insertWhisperMessageSchema = createInsertSchema(whisperMessages).omit({
+  id: true,
+  createdAt: true,
+  isDeleted: true,
+  editedAt: true,
+});
+export type InsertWhisperMessage = z.infer<typeof insertWhisperMessageSchema>;
+
+// Reaction types
+export type MessageReaction = typeof messageReactions.$inferSelect;
+export type WhisperReaction = typeof whisperReactions.$inferSelect;
+
+// Typing status types
+export type TypingStatus = typeof typingStatus.$inferSelect;
 
 // User presence types
 export type UserPresenceStatus = typeof userPresence.$inferSelect;

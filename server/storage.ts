@@ -4,6 +4,10 @@ import {
   chaptersConfig,
   chapterRecommendations,
   chatMessages,
+  whisperMessages,
+  messageReactions,
+  whisperReactions,
+  typingStatus,
   userPresence,
   type User,
   type UpsertUser,
@@ -16,6 +20,8 @@ import {
   type InsertChapterRecommendation,
   type ChatMessage,
   type InsertChatMessage,
+  type WhisperMessage,
+  type InsertWhisperMessage,
   type UserPresenceStatus,
   type InsertUserPresence,
 } from "@shared/schema";
@@ -49,6 +55,18 @@ export interface IStorage {
   // Chat operations
   createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(limit: number): Promise<(ChatMessage & { user: User })[]>;
+  updateChatMessage(id: string, message: string): Promise<ChatMessage>;
+  deleteChatMessage(id: string): Promise<void>;
+  
+  // Whisper operations
+  createWhisperMessage(msg: InsertWhisperMessage): Promise<WhisperMessage>;
+  getWhisperMessages(userId: string, limit: number): Promise<(WhisperMessage & { user: User; reactions: any[] })[]>;
+  updateWhisperMessage(id: string, message: string): Promise<WhisperMessage>;
+  deleteWhisperMessage(id: string): Promise<void>;
+  
+  // Reaction operations
+  addReaction(messageId: string, userId: string, reaction: string): Promise<void>;
+  removeReaction(messageId: string, userId: string, reaction: string): Promise<void>;
   
   // User presence operations
   setUserOnline(userId: string, isOnline: boolean): Promise<UserPresenceStatus>;
@@ -294,20 +312,107 @@ export class DatabaseStorage implements IStorage {
         id: chatMessages.id,
         userId: chatMessages.userId,
         message: chatMessages.message,
+        isDeleted: chatMessages.isDeleted,
+        editedAt: chatMessages.editedAt,
         createdAt: chatMessages.createdAt,
         user: users,
       })
       .from(chatMessages)
       .leftJoin(users, eq(chatMessages.userId, users.id))
+      .where(eq(chatMessages.isDeleted, false))
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit)
       .then(results => results.reverse().map(r => ({
         id: r.id,
         userId: r.userId,
         message: r.message,
+        isDeleted: r.isDeleted,
+        editedAt: r.editedAt,
         createdAt: r.createdAt,
         user: r.user!,
       })));
+  }
+
+  async updateChatMessage(id: string, message: string): Promise<ChatMessage> {
+    const [updated] = await db
+      .update(chatMessages)
+      .set({ message, editedAt: new Date() })
+      .where(eq(chatMessages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteChatMessage(id: string): Promise<void> {
+    await db
+      .update(chatMessages)
+      .set({ isDeleted: true })
+      .where(eq(chatMessages.id, id));
+  }
+
+  // Whisper operations
+  async createWhisperMessage(msg: InsertWhisperMessage): Promise<WhisperMessage> {
+    const [created] = await db
+      .insert(whisperMessages)
+      .values(msg)
+      .returning();
+    return created;
+  }
+
+  async getWhisperMessages(userId: string, limit: number = 50): Promise<(WhisperMessage & { user: User; reactions: any[] })[]> {
+    const results = await db
+      .select({
+        id: whisperMessages.id,
+        senderId: whisperMessages.senderId,
+        recipientIds: whisperMessages.recipientIds,
+        message: whisperMessages.message,
+        isDeleted: whisperMessages.isDeleted,
+        editedAt: whisperMessages.editedAt,
+        createdAt: whisperMessages.createdAt,
+        user: users,
+      })
+      .from(whisperMessages)
+      .leftJoin(users, eq(whisperMessages.senderId, users.id))
+      .where(eq(whisperMessages.isDeleted, false))
+      .orderBy(desc(whisperMessages.createdAt))
+      .limit(limit);
+    
+    return results.reverse().map(r => ({
+      id: r.id,
+      senderId: r.senderId,
+      recipientIds: r.recipientIds as string[],
+      message: r.message,
+      isDeleted: r.isDeleted,
+      editedAt: r.editedAt,
+      createdAt: r.createdAt,
+      user: r.user!,
+      reactions: [],
+    }));
+  }
+
+  async updateWhisperMessage(id: string, message: string): Promise<WhisperMessage> {
+    const [updated] = await db
+      .update(whisperMessages)
+      .set({ message, editedAt: new Date() })
+      .where(eq(whisperMessages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWhisperMessage(id: string): Promise<void> {
+    await db
+      .update(whisperMessages)
+      .set({ isDeleted: true })
+      .where(eq(whisperMessages.id, id));
+  }
+
+  async addReaction(messageId: string, userId: string, reaction: string): Promise<void> {
+    await db.insert(messageReactions).values({ messageId, userId, reaction }).onConflictDoNothing();
+  }
+
+  async removeReaction(messageId: string, userId: string, reaction: string): Promise<void> {
+    await db
+      .delete(messageReactions)
+      .where(and(eq(messageReactions.messageId, messageId), eq(messageReactions.userId, userId), eq(messageReactions.reaction, reaction)));
   }
 
   // User presence operations

@@ -313,6 +313,129 @@ export async function registerRoutes(
     }
   });
 
+  // Edit chat message
+  app.patch("/api/chat/messages/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { id } = req.params;
+      const { message } = req.body;
+      
+      if (!message || typeof message !== "string" || message.trim().length === 0) {
+        return res.status(400).json({ message: "Message cannot be empty" });
+      }
+
+      const updated = await storage.updateChatMessage(id, message.trim().substring(0, 1000));
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating message:", error);
+      res.status(500).json({ message: "Failed to update message" });
+    }
+  });
+
+  // Delete chat message
+  app.delete("/api/chat/messages/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteChatMessage(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
+  // Whisper routes
+  app.get("/api/whispers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const messages = await storage.getWhisperMessages(userId, 100);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching whispers:", error);
+      res.status(500).json({ message: "Failed to fetch whispers" });
+    }
+  });
+
+  app.post("/api/whispers", isAuthenticated, async (req: any, res) => {
+    try {
+      const senderId = req.userId || req.user?.claims?.sub;
+      const { recipientIds, message } = req.body;
+      
+      if (!message || typeof message !== "string" || message.trim().length === 0) {
+        return res.status(400).json({ message: "Message cannot be empty" });
+      }
+
+      if (!Array.isArray(recipientIds) || recipientIds.length === 0 || recipientIds.length > 2) {
+        return res.status(400).json({ message: "Invalid recipients. Must be 1-2 users." });
+      }
+
+      const msg = await storage.createWhisperMessage({
+        senderId,
+        recipientIds,
+        message: message.trim().substring(0, 1000),
+      });
+      res.status(201).json(msg);
+    } catch (error) {
+      console.error("Error creating whisper:", error);
+      res.status(500).json({ message: "Failed to send whisper" });
+    }
+  });
+
+  // Edit whisper
+  app.patch("/api/whispers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { message } = req.body;
+      
+      if (!message || typeof message !== "string" || message.trim().length === 0) {
+        return res.status(400).json({ message: "Message cannot be empty" });
+      }
+
+      const updated = await storage.updateWhisperMessage(id, message.trim().substring(0, 1000));
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating whisper:", error);
+      res.status(500).json({ message: "Failed to update whisper" });
+    }
+  });
+
+  // Delete whisper
+  app.delete("/api/whispers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteWhisperMessage(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting whisper:", error);
+      res.status(500).json({ message: "Failed to delete whisper" });
+    }
+  });
+
+  // Reaction routes
+  app.post("/api/chat/reactions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { messageId, reaction } = req.body;
+      
+      await storage.addReaction(messageId, userId, reaction);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+      res.status(500).json({ message: "Failed to add reaction" });
+    }
+  });
+
+  app.delete("/api/chat/reactions/:messageId/:reaction", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { messageId, reaction } = req.params;
+      
+      await storage.removeReaction(messageId, userId, reaction);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing reaction:", error);
+      res.status(500).json({ message: "Failed to remove reaction" });
+    }
+  });
+
   // Online status routes
   app.post("/api/presence/:isOnline", isAuthenticated, async (req: any, res) => {
     try {
