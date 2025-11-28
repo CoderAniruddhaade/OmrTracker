@@ -153,6 +153,17 @@ export async function registerRoutes(
     }
   });
 
+  // Get all users (directory)
+  app.get("/api/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Get user profile with their sheets
   app.get("/api/users/:userId", isAuthenticated, async (req: any, res) => {
     try {

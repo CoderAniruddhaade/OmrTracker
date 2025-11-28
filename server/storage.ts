@@ -28,6 +28,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByUsername(username: string): Promise<User | undefined>;
   registerUser(username: string, passwordHash: string): Promise<User>;
+  getAllUsers(): Promise<(User & { sheetCount: number; isOnline: boolean })[]>;
   
   // OMR Sheet operations
   createOmrSheet(sheet: InsertOmrSheet): Promise<OmrSheet>;
@@ -91,6 +92,25 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<(User & { sheetCount: number; isOnline: boolean })[]> {
+    const allUsers = await db.select().from(users).orderBy(users.firstName);
+    
+    const result = await Promise.all(
+      allUsers.map(async (user) => {
+        const sheets = await db.select().from(omrSheets).where(eq(omrSheets.userId, user.id));
+        const presence = await db.select().from(userPresence).where(eq(userPresence.userId, user.id));
+        
+        return {
+          ...user,
+          sheetCount: sheets.length,
+          isOnline: presence[0]?.isOnline || false,
+        };
+      })
+    );
+    
+    return result;
   }
 
   // OMR Sheet operations
