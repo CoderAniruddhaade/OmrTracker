@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users, Settings, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
@@ -83,7 +84,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <motion.div 
+      className="min-h-screen bg-background flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -131,7 +137,12 @@ export default function Home() {
 
           <div className="lg:col-span-3 order-1 lg:order-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <motion.div 
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 <TabsList className="grid w-full sm:w-auto grid-cols-4">
                   <TabsTrigger value="new-sheet" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-new-sheet">
                     <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -155,7 +166,13 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
                 {activeTab === "activity" && (
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <motion.div 
+                    className="flex gap-2 w-full sm:w-auto"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <Button
                       size="sm"
                       variant="outline"
@@ -180,13 +197,18 @@ export default function Home() {
                       <span className="hidden sm:inline">{isExporting ? "..." : "Word"}</span>
                       <span className="sm:hidden">{isExporting ? "..." : "Doc"}</span>
                     </Button>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
 
 
               <TabsContent value="activity" className="mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <motion.div 
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <div>
                     <div className="mb-4">
                       <h2 className="text-lg sm:text-xl font-semibold mb-2">Activity Feed</h2>
@@ -199,20 +221,32 @@ export default function Home() {
                   <div>
                     <Bakchodi />
                   </div>
-                </div>
+                </motion.div>
               </TabsContent>
 
-              <TabsContent value="new-sheet" className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                  <OMRSheetForm />
-                </div>
-                <div>
-                  <Bakchodi />
-                </div>
+              <TabsContent value="new-sheet" className="mt-0">
+                <motion.div 
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div>
+                    <OMRSheetForm />
+                  </div>
+                  <div>
+                    <Bakchodi />
+                  </div>
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="private-chat" className="mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                <motion.div 
+                  className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <div className="lg:col-span-1">
                     <ChatMenu onSelectConversation={setSelectedChatId} selectedConvId={selectedChatId} />
                   </div>
@@ -225,17 +259,23 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="users" className="mt-0">
-                <UsersDirectory />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <UsersDirectory />
+                </motion.div>
               </TabsContent>
             </Tabs>
           </div>
 
         </div>
       </main>
-    </div>
+    </motion.div>
   );
 }
