@@ -280,7 +280,7 @@ export default function WhatsAppChatFullscreen({ onClose }: WhatsAppChatFullscre
               {filteredUsers.length > 0 && (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mt-4">
-                    Users
+                    Available Users
                   </div>
                   {filteredUsers.map((u: any) => (
                     <button
