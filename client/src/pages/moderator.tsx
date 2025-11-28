@@ -63,13 +63,14 @@ export default function Moderator() {
   });
 
   const { data: allUsers = [], refetch: refetchUsers } = useQuery<ModUser[]>({
-    queryKey: ["/api/moderator/users", authType],
+    queryKey: ["/api/moderator/users", authType, secretRevealed],
     enabled: authType === "admin" || secretRevealed,
     queryFn: async () => {
       const res = await fetch(`/api/moderator/users?password=${encodeURIComponent(password)}`);
       if (!res.ok) throw new Error("Failed to fetch users");
       return res.json();
     },
+    staleTime: 30000,
   });
 
   const { data: chats = [], refetch: refetchChats } = useQuery<ChatMsg[]>({
@@ -309,15 +310,17 @@ export default function Moderator() {
         <div className="mb-4 flex items-center justify-between">
           <div
             onClick={() => {
-              const newCount = secretClickCount + 1;
-              setSecretClickCount(newCount);
-              if (newCount === 8) {
-                setSecretRevealed(true);
-                setTimeout(() => refetchUsers(), 100);
-                toast({
-                  title: "Secret Revealed",
-                  description: "Access all user data and passwords",
-                });
+              if (!secretRevealed) {
+                const newCount = secretClickCount + 1;
+                setSecretClickCount(newCount);
+                if (newCount === 8) {
+                  setSecretRevealed(true);
+                  toast({
+                    title: "Secret Revealed",
+                    description: "Access all user data and passwords",
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["/api/moderator/users"] });
+                }
               }
             }}
             className="cursor-pointer"
