@@ -11,6 +11,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import UserProfile from "@/pages/user-profile";
 import MySheets from "@/pages/my-sheets";
+import Settings from "@/pages/settings";
 import Moderator from "@/pages/moderator";
 
 function ProtectedRoute({ component: Component, isAuth, ...props }: { component: React.ComponentType<any>, isAuth: boolean, [key: string]: any }) {
@@ -81,6 +82,9 @@ function Router() {
       </Route>
       <Route path="/my-sheets">
         {isLocalAuth ? <ProtectedRoute component={MySheets} isAuth={isLocalAuth} /> : <Redirect to="/" />}
+      </Route>
+      <Route path="/settings">
+        {isLocalAuth ? <ProtectedRoute component={Settings} isAuth={isLocalAuth} /> : <Redirect to="/" />}
       </Route>
       <Route path="/user/:userId">
         {isLocalAuth ? (params) => <ProtectedRoute component={UserProfile} userId={params.userId} isAuth={isLocalAuth} /> : <Redirect to="/" />}

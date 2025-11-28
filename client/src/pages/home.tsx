@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users } from "lucide-react";
+import { ClipboardCheck, Activity, Plus, LogOut, Download, FileText, Users, Settings } from "lucide-react";
+import { Link } from "wouter";
 import OMRSheetForm from "@/components/omr-sheet-form";
 import ActivityFeed from "@/components/activity-feed";
 import UserStats from "@/components/user-stats";
@@ -90,6 +91,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
+            <Link to="/settings">
+              <Button size="sm" variant="outline" data-testid="button-settings" className="text-xs sm:text-sm">
+                <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Settings</span>
+              </Button>
+            </Link>
             <Button size="sm" variant="outline" onClick={() => {
               localStorage.removeItem("omr_auth");
               window.location.href = "/";

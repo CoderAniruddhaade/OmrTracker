@@ -103,6 +103,50 @@ export async function registerRoutes(
     }
   });
 
+  // Update user profile (name)
+  app.patch("/api/auth/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { firstName, lastName } = req.body;
+      
+      const user = await storage.updateUserProfile(userId, firstName, lastName);
+      res.json({ id: user.id, username: user.username, firstName: user.firstName, lastName: user.lastName });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Update user password
+  app.patch("/api/auth/password", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.userId || req.user?.claims?.sub;
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current and new password required" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+      
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(userId, newHash, newPassword);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
   // OMR Sheet routes
   // GET current user's sheet
   app.get("/api/omr-sheets/current", isAuthenticated, async (req: any, res) => {
