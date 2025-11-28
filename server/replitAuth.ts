@@ -131,6 +131,13 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Check for user ID from localStorage auth (via header)
+  const userId = req.headers["x-user-id"];
+  if (userId) {
+    (req as any).userId = userId;
+    return next();
+  }
+  
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

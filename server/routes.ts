@@ -94,7 +94,7 @@ export async function registerRoutes(
       if (!req.isAuthenticated() || !req.user?.claims?.sub) {
         return res.json(null);
       }
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -106,7 +106,7 @@ export async function registerRoutes(
   // OMR Sheet routes
   app.post("/api/omr-sheets", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       
       // Validate request body with 8-question enforcement
       const validatedData = omrSheetBodySchema.parse(req.body);
@@ -133,7 +133,7 @@ export async function registerRoutes(
   // Get current user's sheets
   app.get("/api/my-sheets", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const sheets = await storage.getOmrSheetsByUser(userId);
       res.json(sheets);
     } catch (error) {
@@ -224,7 +224,7 @@ export async function registerRoutes(
   // Recommend chapter
   app.post("/api/recommendations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const { subject, chapterName } = req.body;
       const rec = await storage.createRecommendation({ userId, subject, chapterName });
       res.json(rec);
@@ -248,7 +248,7 @@ export async function registerRoutes(
   // Approve recommendation
   app.post("/api/recommendations/:id/approve", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const { id } = req.params;
       const updated = await storage.approveRecommendation(id, userId);
       res.json(updated);
@@ -261,7 +261,7 @@ export async function registerRoutes(
   // Reject recommendation
   app.post("/api/recommendations/:id/reject", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const { id } = req.params;
       const updated = await storage.rejectRecommendation(id, userId);
       res.json(updated);
@@ -284,7 +284,7 @@ export async function registerRoutes(
 
   app.post("/api/chat/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const { message } = req.body;
       
       if (!message || typeof message !== "string" || message.trim().length === 0) {
@@ -305,7 +305,7 @@ export async function registerRoutes(
   // Online status routes
   app.post("/api/presence/:isOnline", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId || req.user?.claims?.sub;
       const isOnline = req.params.isOnline === "true";
       const result = await storage.setUserOnline(userId, isOnline);
       res.json(result);
