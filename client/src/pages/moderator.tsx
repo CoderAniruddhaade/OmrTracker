@@ -641,43 +641,6 @@ export default function Moderator() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {secretRevealed && (
-            <TabsContent value="secret" className="space-y-4">
-              <Card className="border-destructive/50 bg-destructive/5">
-                <CardHeader>
-                  <CardTitle className="text-destructive">Secret Admin Access - All Users & Logins</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="w-full">
-                    <div className="space-y-4 pr-4">
-                      {allUsers.map((user) => (
-                        <div key={user.id} className="p-4 border rounded-lg space-y-2 bg-card hover-elevate">
-                          <div className="flex items-center justify-between flex-wrap gap-2">
-                            <div>
-                              <p className="font-bold text-lg">{user.firstName} {user.lastName}</p>
-                              <p className="text-sm text-muted-foreground">@{user.username}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              {user.isOnline && <Badge variant="secondary">Online</Badge>}
-                              <Badge variant="outline">{user.sheets} sheets</Badge>
-                            </div>
-                          </div>
-                          <div className="text-sm space-y-2 bg-secondary/50 p-3 rounded border">
-                            <p><span className="font-semibold">Email:</span> {user.email || "N/A"}</p>
-                            <p><span className="font-semibold">Username:</span> {user.username}</p>
-                            <p><span className="font-semibold">Password:</span> <code className="bg-background px-2 py-1 rounded font-mono break-all">{user.plainPassword || "N/A"}</code></p>
-                            <p><span className="font-semibold">User ID:</span> <code className="bg-background px-2 py-1 rounded text-xs break-all">{user.id}</code></p>
-                            <p className="text-xs text-muted-foreground">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
         </Tabs>
       </div>
     </div>
