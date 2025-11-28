@@ -560,9 +560,7 @@ export default function Moderator() {
                                       title: "Logged in as " + user.firstName,
                                       description: "Redirecting to OMR sheet...",
                                     });
-                                    setTimeout(() => {
-                                      location.reload();
-                                    }, 500);
+                                    window.location.href = "/";
                                   } else {
                                     toast({
                                       title: "Error",
