@@ -558,11 +558,11 @@ export default function Moderator() {
                                     localStorage.setItem("user", JSON.stringify(userData));
                                     toast({
                                       title: "Logged in as " + user.firstName,
-                                      description: "You are now viewing as this user",
+                                      description: "Redirecting to OMR sheet...",
                                     });
                                     setTimeout(() => {
-                                      window.location.href = "/";
-                                    }, 300);
+                                      location.reload();
+                                    }, 500);
                                   } else {
                                     toast({
                                       title: "Error",
