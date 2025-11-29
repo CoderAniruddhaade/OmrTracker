@@ -115,7 +115,7 @@ export default function MySheets() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ClipboardCheck className="w-5 h-5" />
-              My OMR Sheets
+              My NEET Sheets
             </CardTitle>
           </CardHeader>
           <CardContent>

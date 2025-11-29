@@ -1,16 +1,17 @@
-# OMR Tracker
+# NEET Tracker
 
-A web-based OMR (Optical Mark Recognition) sheet tracking application for Physics, Chemistry, and Biology practice with multi-user activity tracking.
+A web-based NEET preparation tracker for Physics, Chemistry, and Biology practice with multi-user activity tracking and admin controls.
 
 ## Overview
 
 This application allows users to:
-- Create OMR sheets with their name and 24 questions (8 per subject)
+- Create practice sheets with their name and 24 questions (8 per subject)
 - Mark each question as "Done" or "Not Done"
 - If "Done", mark as "Practiced" or "Not Practiced"
 - View their own submission history and statistics
 - Track other users' activities and progress
 - View detailed user profiles with completion statistics
+- Admin features: ban/unban users, manage chapters, view chats, and impersonate users
 
 ## Tech Stack
 
@@ -26,7 +27,7 @@ client/
 ├── src/
 │   ├── components/
 │   │   ├── ui/           # Shadcn UI components
-│   │   ├── omr-sheet-form.tsx    # Main OMR sheet form component
+│   │   ├── omr-sheet-form.tsx    # Main practice sheet form component
 │   │   ├── activity-feed.tsx     # Activity feed component
 │   │   └── user-stats.tsx        # User statistics card
 │   ├── pages/
@@ -55,7 +56,7 @@ shared/
 ## API Routes
 
 - `GET /api/auth/user` - Get current authenticated user
-- `POST /api/omr-sheets` - Create new OMR sheet
+- `POST /api/omr-sheets` - Create new practice sheet
 - `GET /api/my-sheets` - Get current user's sheets
 - `GET /api/activity` - Get all users' activity
 - `GET /api/users/:userId` - Get user profile with sheets
@@ -74,7 +75,7 @@ shared/
 - `createdAt` (timestamp)
 - `updatedAt` (timestamp)
 
-### OMR Sheets Table
+### Practice Sheets Table
 - `id` (varchar, primary key) - UUID
 - `userId` (varchar, foreign key) - Reference to users
 - `name` (varchar) - Sheet name
@@ -146,7 +147,7 @@ The app runs with `npm run dev` which starts both frontend (Vite) and backend (E
 
 ## Recent Changes
 
-- Initial implementation of OMR Tracker with full CRUD functionality
+- Initial implementation of NEET Tracker with full CRUD functionality
 - Added Replit Auth for user authentication
 - Created responsive dashboard with activity feed
 - Implemented user profile pages with statistics

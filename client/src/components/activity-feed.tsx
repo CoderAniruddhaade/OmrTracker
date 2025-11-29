@@ -48,7 +48,7 @@ export default function ActivityFeed({ limit, showViewAll = false }: ActivityFee
           <ClipboardCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">No activity yet</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Be the first to submit an OMR sheet!
+            Be the first to submit a practice sheet!
           </p>
         </CardContent>
       </Card>
@@ -144,7 +144,7 @@ const ActivityCard = memo(function ActivityCard({ activity }: { activity: OmrShe
                   {userName}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  completed OMR sheet
+                  completed a practice sheet
                 </span>
               </div>
               

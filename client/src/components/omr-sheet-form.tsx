@@ -275,14 +275,14 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/activity"] });
       toast({
         title: "Success",
-        description: "OMR sheet updated successfully!",
+        description: "Practice sheet updated successfully!",
       });
       onSubmitSuccess?.();
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to update OMR sheet",
+        description: error.message || "Failed to update practice sheet",
         variant: "destructive",
       });
     },
@@ -310,7 +310,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>Update OMR Sheet</CardTitle>
+          <CardTitle>Update Practice Sheet</CardTitle>
           <Button 
             type="button"
             variant="outline"
@@ -376,7 +376,7 @@ export default function OMRSheetForm({ onSubmitSuccess }: OMRSheetFormProps) {
         data-testid="button-submit"
       >
         <Save className="w-4 h-4 mr-2" />
-        {mutation.isPending ? "Submitting..." : "Submit OMR Sheet"}
+        {mutation.isPending ? "Submitting..." : "Submit Practice Sheet"}
       </Button>
     </form>
   );

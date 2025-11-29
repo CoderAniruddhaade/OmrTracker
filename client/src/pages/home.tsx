@@ -96,7 +96,7 @@ export default function Home() {
             <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
               <ClipboardCheck className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-base sm:text-lg hidden sm:block">OMR Tracker</span>
+            <span className="font-semibold text-base sm:text-lg hidden sm:block">NEET Tracker</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />

@@ -119,7 +119,7 @@ export default function Landing() {
           <CardContent className="pt-6">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold">Sign In</h1>
-              <p className="text-sm text-muted-foreground mt-1">Access your OMR Tracker account</p>
+              <p className="text-sm text-muted-foreground mt-1">Access your NEET Tracker account</p>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <Input
@@ -178,7 +178,7 @@ export default function Landing() {
           <CardContent className="pt-6">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold">Create Account</h1>
-              <p className="text-sm text-muted-foreground mt-1">Join OMR Tracker</p>
+              <p className="text-sm text-muted-foreground mt-1">Join NEET Tracker</p>
             </div>
             <form onSubmit={handleRegister} className="space-y-4">
               <Input
@@ -247,7 +247,7 @@ export default function Landing() {
             <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
               <ClipboardCheck className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-base sm:text-lg truncate">OMR Tracker</span>
+            <span className="font-semibold text-base sm:text-lg truncate">NEET Tracker</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
@@ -341,7 +341,7 @@ export default function Landing() {
 
         <section className="py-12 sm:py-16 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-xl sm:text-2xl font-semibold text-center mb-8 sm:mb-12">Why Use OMR Tracker?</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-center mb-8 sm:mb-12">Why Use NEET Tracker?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               <div className="text-center">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -379,7 +379,7 @@ export default function Landing() {
 
       <footer className="border-t border-border py-6 sm:py-8 px-4 mt-auto">
         <div className="max-w-6xl mx-auto text-center text-xs sm:text-sm text-muted-foreground">
-          <p>OMR Tracker - Track your practice progress effectively</p>
+          <p>NEET Tracker - Track your practice progress effectively</p>
         </div>
       </footer>
     </div>
