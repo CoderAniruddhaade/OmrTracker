@@ -113,26 +113,37 @@ export async function registerRoutes(
   // This allows frontend to check auth state without error
   app.get("/api/auth/user", async (req: any, res) => {
     try {
+      // Never cache this endpoint - always check ban status
+      res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.set("Pragma", "no-cache");
+      res.set("Expires", "0");
+      
       // Check for X-User-ID header first (localStorage auth)
-      let userId = req.headers["x-user-id"];
+      let userId = req.headers["x-user-id"] as string | undefined;
       
       // Fall back to Replit Auth session
-      if (!userId && (req.isAuthenticated() && req.user?.claims?.sub)) {
+      if (!userId && req.isAuthenticated() && req.user?.claims?.sub) {
         userId = req.user.claims.sub;
       }
       
       if (!userId) {
-        return res.json(null);
+        return res.status(200).json(null);
       }
+      
+      console.log(`[Auth Check] Checking ban status for user: ${userId}`);
       
       // Check if user is banned
       const isBanned = await storage.isUserBanned(userId);
+      console.log(`[Auth Check] User ${userId} banned: ${isBanned}`);
+      
       if (isBanned) {
+        console.log(`[Auth Check] Returning 403 for banned user: ${userId}`);
         return res.status(403).json({ message: "Your account has been banned." });
       }
       
       const user = await storage.getUser(userId);
-      res.json(user);
+      console.log(`[Auth Check] Returning user data for: ${userId}`);
+      res.status(200).json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
