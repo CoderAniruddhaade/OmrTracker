@@ -38,6 +38,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByUsername(username: string): Promise<User | undefined>;
   registerUser(username: string, passwordHash: string, plainPassword?: string): Promise<User>;
+  ensureUserExists(userId: string): Promise<User>;
   updateUserProfile(userId: string, firstName?: string, lastName?: string): Promise<User>;
   updateUserPassword(userId: string, passwordHash: string, plainPassword: string): Promise<User>;
   getAllUsers(): Promise<(User & { sheetCount: number; isOnline: boolean })[]>;
@@ -132,6 +133,24 @@ export class DatabaseStorage implements IStorage {
         passwordHash,
         plainPassword: plainPassword || "",
         firstName: username,
+      })
+      .returning();
+    return user;
+  }
+
+  async ensureUserExists(userId: string): Promise<User> {
+    const existing = await this.getUser(userId);
+    if (existing) {
+      return existing;
+    }
+    
+    // Create a minimal user record for local auth users
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userId,
+        username: userId,
+        firstName: "User",
       })
       .returning();
     return user;

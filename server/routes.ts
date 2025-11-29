@@ -229,6 +229,9 @@ export async function registerRoutes(
       // Check for impersonation via header, otherwise use session
       const userId = req.headers["x-user-id"] || req.userId || req.user?.claims?.sub;
       
+      // Ensure user exists in database
+      await storage.ensureUserExists(userId);
+      
       // Validate request body
       const validatedData = omrSheetBodySchema.parse(req.body);
       
@@ -681,6 +684,10 @@ export async function registerRoutes(
   app.post("/api/presence/:isOnline", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.userId || req.user?.claims?.sub;
+      
+      // Ensure user exists in database
+      await storage.ensureUserExists(userId);
+      
       const isOnline = req.params.isOnline === "true";
       const result = await storage.setUserOnline(userId, isOnline);
       res.json(result);
