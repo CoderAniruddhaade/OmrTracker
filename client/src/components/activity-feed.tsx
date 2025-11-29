@@ -178,7 +178,9 @@ const ActivityCard = memo(function ActivityCard({ activity, onlineUserMap }: { a
                     {userName}
                   </span>
                   {onlineUserMap.has(activity.userId) && (
-                    <Circle className="w-2 h-2 fill-green-500 text-green-500 flex-shrink-0" data-testid={`badge-online-${activity.userId}`} />
+                    <div className="relative flex items-center justify-center w-3 h-3 flex-shrink-0">
+                      <Circle className="w-2.5 h-2.5 fill-green-500 text-green-500 online-pulse" data-testid={`badge-online-${activity.userId}`} />
+                    </div>
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground">

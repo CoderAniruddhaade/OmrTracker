@@ -95,7 +95,9 @@ export default function UsersDirectory() {
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   {user.isOnline ? (
                     <Badge variant="default" className="gap-1 bg-green-600 hover:bg-green-700" data-testid={`badge-online-${user.id}`}>
-                      <Circle className="w-2 h-2 fill-current" />
+                      <div className="relative flex items-center justify-center">
+                        <Circle className="w-3 h-3 fill-current online-pulse" />
+                      </div>
                       <span className="hidden sm:inline text-xs">Online</span>
                     </Badge>
                   ) : (
