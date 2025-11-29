@@ -17,18 +17,34 @@ export function useAuth() {
     }
   }, []);
 
-  const { data: user, isLoading, refetch, isError, status } = useQuery<User | null>({
+  const { data: user, isLoading, refetch, isError, error } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
     staleTime: 0,
     refetchInterval: 2000, // Poll every 2 seconds to detect ban status quickly
     gcTime: 0, // Don't cache results
+    queryFn: async () => {
+      const response = await fetch("/api/auth/user");
+      
+      // If banned (403), logout immediately
+      if (response.status === 403) {
+        throw new Error("BANNED");
+      }
+      
+      // If not authenticated (200 with null)
+      if (!response.ok && response.status !== 200) {
+        throw new Error("Not authenticated");
+      }
+      
+      const data = await response.json();
+      return data as User | null;
+    },
   });
 
-  // Handle ban: if API returns error, logout user
+  // Handle ban: if query throws "BANNED" error, logout user
   useEffect(() => {
-    if ((status === "error" || isError) && localUser) {
-      // User was authenticated but now getting error - likely banned
+    if (error && error.message === "BANNED" && localUser) {
+      // User was authenticated but now banned
       localStorage.removeItem("user");
       localStorage.removeItem("omr_auth");
       setLocalUser(null);
@@ -37,7 +53,7 @@ export function useAuth() {
       // Dispatch custom event so other parts of app can show toast
       window.dispatchEvent(new CustomEvent("userBanned", { detail: { message: "Your account has been banned." } }));
     }
-  }, [status, isError, localUser]);
+  }, [error, localUser]);
 
   // Use localStorage user if available, otherwise use API user
   const finalUser = localUser || user;
