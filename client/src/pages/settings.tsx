@@ -1,18 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import type { User } from "@shared/schema";
 
 export default function Settings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+
+  // Fetch current user data
+  const { data: currentUser } = useQuery<User | null>({
+    queryKey: ["/api/auth/user"],
+  });
+
+  // Update username when user data loads
+  useEffect(() => {
+    if (currentUser?.username) {
+      setUsername(currentUser.username);
+    }
+  }, [currentUser]);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -94,7 +108,14 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium">First Name</label>
+                <label className="text-sm font-medium">Your Username</label>
+                <div className="p-2 bg-muted rounded text-sm" data-testid="text-username">
+                  {username || "Loading..."}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Your unique identifier in the system</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Display Name (First)</label>
                 <Input
                   placeholder="Enter first name"
                   value={firstName}
@@ -103,7 +124,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Last Name</label>
+                <label className="text-sm font-medium">Display Name (Last)</label>
                 <Input
                   placeholder="Enter last name"
                   value={lastName}
