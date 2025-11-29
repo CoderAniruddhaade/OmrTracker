@@ -22,6 +22,9 @@ export default function UsersDirectory() {
     queryKey: ["/api/users"],
   });
 
+  // Filter to show only users with sheets (registered/active users)
+  const registeredUsers = allUsers.filter(user => user.sheetCount > 0);
+
   const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
     queryKey: ["/api/online-users"],
     refetchInterval: 500,
@@ -53,7 +56,7 @@ export default function UsersDirectory() {
   );
   
   // Update users with real-time online status
-  const usersWithLiveStatus = allUsers.map(user => ({
+  const usersWithLiveStatus = registeredUsers.map(user => ({
     ...user,
     isOnline: onlineUserMap.has(user.id),
   }));
@@ -67,7 +70,7 @@ export default function UsersDirectory() {
         <div>
           <h3 className="font-semibold text-base sm:text-lg">Community</h3>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            {allUsers.length} users • {onlineUsers.length} online
+            {usersWithLiveStatus.length} users • {onlineUsers.length} online
           </p>
         </div>
       </div>
@@ -84,7 +87,9 @@ export default function UsersDirectory() {
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-sm truncate" data-testid={`text-username-${user.id}`}>
-                    {user.username}
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.firstName || user.username}
                   </h4>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -113,7 +118,7 @@ export default function UsersDirectory() {
         ))}
       </div>
 
-      {allUsers.length === 0 && (
+      {usersWithLiveStatus.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No users yet</p>
         </div>
