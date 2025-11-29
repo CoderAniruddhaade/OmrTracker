@@ -21,7 +21,8 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     retry: false,
     staleTime: 0,
-    refetchInterval: 5000, // Poll every 5 seconds to detect ban status
+    refetchInterval: 2000, // Poll every 2 seconds to detect ban status quickly
+    gcTime: 0, // Don't cache results
   });
 
   // Handle ban: if API returns error, logout user

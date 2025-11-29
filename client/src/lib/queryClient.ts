@@ -64,6 +64,17 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
+    // Handle 403 Forbidden (banned users) same as 401
+    if (res.status === 403) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("omr_auth");
+      window.dispatchEvent(new CustomEvent("userBanned", { detail: { message: "Your account has been banned." } }));
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      throw new Error("Account banned");
+    }
+
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
