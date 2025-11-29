@@ -3,6 +3,7 @@ import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +36,7 @@ function ProtectedRoute({ component: Component, isAuth, ...props }: { component:
 function Router() {
   const [isLocalAuth, setIsLocalAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check localStorage for auth
@@ -61,11 +63,24 @@ function Router() {
     // Listen for custom events from same page
     window.addEventListener("authChange", checkAuth);
     
+    // Listen for ban events
+    const handleBan = (e: Event) => {
+      const event = e as CustomEvent;
+      toast({
+        title: "Account Banned",
+        description: event.detail?.message || "Your account has been banned. You have been logged out.",
+        variant: "destructive",
+      });
+      setIsLocalAuth(false);
+    };
+    window.addEventListener("userBanned", handleBan);
+    
     return () => {
       window.removeEventListener("storage", checkAuth);
       window.removeEventListener("authChange", checkAuth);
+      window.removeEventListener("userBanned", handleBan);
     };
-  }, []);
+  }, [toast]);
 
   if (isLoading) {
     return (

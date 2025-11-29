@@ -89,6 +89,12 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
+      // Check if user is banned
+      const isBanned = await storage.isUserBanned(user.id);
+      if (isBanned) {
+        return res.status(403).json({ message: "Your account has been banned. Please contact an administrator." });
+      }
+      
       // Verify password
       const isValid = await bcrypt.compare(password, user.passwordHash);
       if (!isValid) {
@@ -111,6 +117,13 @@ export async function registerRoutes(
         return res.json(null);
       }
       const userId = req.userId || req.user?.claims?.sub;
+      
+      // Check if user is banned
+      const isBanned = await storage.isUserBanned(userId);
+      if (isBanned) {
+        return res.status(403).json({ message: "Your account has been banned." });
+      }
+      
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
