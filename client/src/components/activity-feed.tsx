@@ -113,9 +113,18 @@ const ActivityCard = memo(function ActivityCard({ activity }: { activity: OmrShe
     };
   }, [activity]);
 
-  const userName = useMemo(() => activity.user?.firstName && activity.user?.lastName
-    ? `${activity.user.firstName} ${activity.user.lastName}`
-    : activity.user?.firstName || activity.user?.email || "Anonymous", [activity.user]);
+  const userName = useMemo(() => {
+    // If both firstName and lastName are set and not just IDs, use them
+    if (activity.user?.firstName && activity.user?.lastName) {
+      return `${activity.user.firstName} ${activity.user.lastName}`;
+    }
+    // If only firstName is set and not just an ID, use it
+    if (activity.user?.firstName && activity.user.firstName.length > 8) {
+      return activity.user.firstName;
+    }
+    // Otherwise fall back to username
+    return activity.user?.username || activity.user?.email || "Anonymous";
+  }, [activity.user]);
 
   const initials = useMemo(() => userName
     .split(" ")
