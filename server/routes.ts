@@ -113,10 +113,17 @@ export async function registerRoutes(
   // This allows frontend to check auth state without error
   app.get("/api/auth/user", async (req: any, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+      // Check for X-User-ID header first (localStorage auth)
+      let userId = req.headers["x-user-id"];
+      
+      // Fall back to Replit Auth session
+      if (!userId && (req.isAuthenticated() && req.user?.claims?.sub)) {
+        userId = req.user.claims.sub;
+      }
+      
+      if (!userId) {
         return res.json(null);
       }
-      const userId = req.userId || req.user?.claims?.sub;
       
       // Check if user is banned
       const isBanned = await storage.isUserBanned(userId);
