@@ -134,6 +134,11 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // Check for user ID from localStorage auth (via header)
   const userId = req.headers["x-user-id"];
   if (userId) {
+    // Verify the user exists in the database
+    const user = await storage.getUser(userId as string);
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     (req as any).userId = userId;
     return next();
   }
