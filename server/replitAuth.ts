@@ -131,16 +131,26 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  // Check for user ID from localStorage auth (via header)
-  const userId = req.headers["x-user-id"];
+  // Check for user ID from header (localStorage auth)
+  let userId = req.headers["x-user-id"] as string | undefined;
+  
+  // Fall back to cookie (from login)
+  if (!userId && req.cookies?.userId) {
+    userId = req.cookies.userId;
+  }
+  
   if (userId) {
     // Verify the user exists in the database
-    const user = await storage.getUser(userId as string);
-    if (!user) {
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      (req as any).userId = userId;
+      return next();
+    } catch (error) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    (req as any).userId = userId;
-    return next();
   }
   
   const user = req.user as any;
