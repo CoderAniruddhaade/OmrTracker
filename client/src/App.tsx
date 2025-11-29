@@ -63,7 +63,14 @@ function Router() {
     // Listen for custom events from same page
     window.addEventListener("authChange", checkAuth);
     
-    // Listen for ban events
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("authChange", checkAuth);
+    };
+  }, []);
+
+  // Separate effect to listen for ban events using toast
+  useEffect(() => {
     const handleBan = (e: Event) => {
       const event = e as CustomEvent;
       toast({
@@ -76,8 +83,6 @@ function Router() {
     window.addEventListener("userBanned", handleBan);
     
     return () => {
-      window.removeEventListener("storage", checkAuth);
-      window.removeEventListener("authChange", checkAuth);
       window.removeEventListener("userBanned", handleBan);
     };
   }, [toast]);
