@@ -29,11 +29,11 @@ export default function ActivityFeed({ limit, showViewAll = false }: ActivityFee
 
   const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
     queryKey: ["/api/online-users"],
-    refetchInterval: 500,
+    refetchInterval: 100,
     staleTime: 0,
   });
 
-  const OFFLINE_TIMEOUT = 2000;
+  const OFFLINE_TIMEOUT = 1000;
   const now = new Date().getTime();
   
   const onlineUserMap = new Map(

@@ -27,7 +27,7 @@ export default function UsersDirectory() {
 
   const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
     queryKey: ["/api/online-users"],
-    refetchInterval: 500,
+    refetchInterval: 100,
     staleTime: 0,
   });
 
@@ -42,7 +42,7 @@ export default function UsersDirectory() {
   }
 
   // Create a map of online user IDs for quick lookup with timeout check
-  const OFFLINE_TIMEOUT = 2000; // 2 seconds
+  const OFFLINE_TIMEOUT = 1000; // 1 second
   const now = new Date().getTime();
   
   const onlineUserMap = new Map(

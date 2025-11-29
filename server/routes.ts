@@ -561,7 +561,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid participants" });
       }
       
-      const allParticipants = [...new Set([userId, ...participantIds])];
+      const participantSet = new Set([userId, ...participantIds]);
+      const allParticipants = Array.from(participantSet);
       const conversation = await storage.getOrCreateConversation(allParticipants);
       res.json(conversation);
     } catch (error) {
@@ -579,7 +580,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid group data" });
       }
       
-      const allParticipants = [...new Set([userId, ...participantIds])];
+      const participantSet = new Set([userId, ...participantIds]);
+      const allParticipants = Array.from(participantSet);
       const conversation = await storage.createGroupConversation(allParticipants, groupName, userId);
       res.json(conversation);
     } catch (error) {

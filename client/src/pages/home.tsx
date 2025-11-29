@@ -40,7 +40,7 @@ export default function Home() {
     
     setOnline();
     
-    const interval = setInterval(setOnline, 30000);
+    const interval = setInterval(setOnline, 5000);
     
     return () => {
       clearInterval(interval);
