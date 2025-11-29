@@ -145,7 +145,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Create a minimal user record for local auth users
-    // Use a shortened version of the userId for display name
+    // Use shortened userId as display name
     const displayName = userId.split('-')[0].slice(0, 8);
     
     const [user] = await db
@@ -153,7 +153,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         id: userId,
         username: userId,
-        firstName: `User-${displayName}`,
+        firstName: displayName,
       })
       .returning();
     return user;
