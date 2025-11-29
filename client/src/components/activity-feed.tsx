@@ -6,10 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { Atom, FlaskConical, Leaf, ClipboardCheck } from "lucide-react";
+import { Atom, FlaskConical, Leaf, ClipboardCheck, Circle } from "lucide-react";
 import type { OmrSheetWithUser } from "@shared/schema";
 import { Link } from "wouter";
 import { memo } from "react";
+
+interface OnlineUser {
+  userId: string;
+  isOnline: boolean;
+  lastSeen: string;
+}
 
 interface ActivityFeedProps {
   limit?: number;
@@ -20,6 +26,24 @@ export default function ActivityFeed({ limit, showViewAll = false }: ActivityFee
   const { data: activities, isLoading } = useQuery<OmrSheetWithUser[]>({
     queryKey: ["/api/activity"],
   });
+
+  const { data: onlineUsersData = [] } = useQuery<OnlineUser[]>({
+    queryKey: ["/api/online-users"],
+    refetchInterval: 500,
+    staleTime: 0,
+  });
+
+  const OFFLINE_TIMEOUT = 2000;
+  const now = new Date().getTime();
+  
+  const onlineUserMap = new Map(
+    onlineUsersData
+      .filter(u => {
+        const lastSeenTime = new Date(u.lastSeen).getTime();
+        return u.isOnline && (now - lastSeenTime) < OFFLINE_TIMEOUT;
+      })
+      .map(u => [u.userId, true])
+  );
 
   if (isLoading) {
     return (
@@ -60,7 +84,7 @@ export default function ActivityFeed({ limit, showViewAll = false }: ActivityFee
   return (
     <div className="space-y-4">
       {displayActivities.map((activity) => (
-        <ActivityCard key={activity.id} activity={activity} />
+        <ActivityCard key={activity.id} activity={activity} onlineUserMap={onlineUserMap} />
       ))}
       
       {showViewAll && activities.length > (limit || 0) && (
@@ -84,7 +108,7 @@ interface SubjectProgressProps {
   colorVar: string;
 }
 
-const ActivityCard = memo(function ActivityCard({ activity }: { activity: OmrSheetWithUser }) {
+const ActivityCard = memo(function ActivityCard({ activity, onlineUserMap }: { activity: OmrSheetWithUser; onlineUserMap: Map<string, boolean> }) {
   const stats = useMemo(() => {
     const physicsChapters = Object.values(activity.physics.chapters || {});
     const chemistryChapters = Object.values(activity.chemistry.chapters || {});
@@ -149,9 +173,14 @@ const ActivityCard = memo(function ActivityCard({ activity }: { activity: OmrShe
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="font-semibold text-sm truncate" data-testid={`text-user-${activity.id}`}>
-                  {userName}
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-sm truncate" data-testid={`text-user-${activity.id}`}>
+                    {userName}
+                  </span>
+                  {onlineUserMap.has(activity.userId) && (
+                    <Circle className="w-2 h-2 fill-green-500 text-green-500 flex-shrink-0" data-testid={`badge-online-${activity.userId}`} />
+                  )}
+                </div>
                 <span className="text-xs text-muted-foreground">
                   completed a practice sheet
                 </span>
