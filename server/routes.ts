@@ -101,6 +101,9 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
+      // Set cookie with user ID for ban checking
+      res.cookie("userId", user.id, { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: false });
+      
       // Return user info (frontend will store in localStorage)
       res.json({ id: user.id, username: user.username, firstName: user.firstName });
     } catch (error) {
@@ -118,8 +121,13 @@ export async function registerRoutes(
       res.set("Pragma", "no-cache");
       res.set("Expires", "0");
       
-      // Check for X-User-ID header first (localStorage auth)
-      let userId = req.headers["x-user-id"] as string | undefined;
+      // Check for userId from cookie first (localStorage auth)
+      let userId = req.cookies?.userId as string | undefined;
+      
+      // Fall back to X-User-ID header
+      if (!userId) {
+        userId = req.headers["x-user-id"] as string | undefined;
+      }
       
       // Fall back to Replit Auth session
       if (!userId && req.isAuthenticated() && req.user?.claims?.sub) {
@@ -130,19 +138,16 @@ export async function registerRoutes(
         return res.status(200).json(null);
       }
       
-      console.log(`[Auth Check] Checking ban status for user: ${userId}`);
-      
       // Check if user is banned
       const isBanned = await storage.isUserBanned(userId);
-      console.log(`[Auth Check] User ${userId} banned: ${isBanned}`);
       
       if (isBanned) {
-        console.log(`[Auth Check] Returning 403 for banned user: ${userId}`);
+        // Clear the userId cookie so they log out
+        res.clearCookie("userId");
         return res.status(403).json({ message: "Your account has been banned." });
       }
       
       const user = await storage.getUser(userId);
-      console.log(`[Auth Check] Returning user data for: ${userId}`);
       res.status(200).json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
