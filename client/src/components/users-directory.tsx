@@ -84,7 +84,9 @@ export default function UsersDirectory() {
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-sm truncate" data-testid={`text-username-${user.id}`}>
-                    {user.firstName || user.username}
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.firstName || user.username}
                   </h4>
                   {user.username && (
                     <p className="text-xs text-muted-foreground truncate">@{user.username}</p>

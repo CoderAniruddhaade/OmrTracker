@@ -169,7 +169,9 @@ export default function Bakchodi() {
                     <div key={msg.id} className="text-xs sm:text-sm p-2 rounded hover-elevate">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold text-primary">
-                          {msg.user?.firstName || "User"}
+                          {msg.user?.firstName && msg.user?.lastName 
+                            ? `${msg.user.firstName} ${msg.user.lastName}`
+                            : msg.user?.firstName || msg.user?.username || "User"}
                         </span>
                         {onlineUserIds.includes(msg.userId) && (
                           <Badge variant="secondary" className="h-4 px-1.5 text-xs">

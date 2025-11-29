@@ -42,7 +42,7 @@ export default function UserStats({ user, isLoading }: UserStatsProps) {
 
   const userName = user.firstName && user.lastName
     ? `${user.firstName} ${user.lastName}`
-    : user.firstName || user.email || "User";
+    : user.firstName || user.username || user.email || "User";
 
   const initials = userName
     .split(" ")
